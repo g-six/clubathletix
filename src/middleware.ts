@@ -1,21 +1,37 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 
-const privatePaths = ['/dashboard']
+const privatePaths = [
+    '/dashboard',
+    '/member',
+    '/organization',
+    '/tournament',
+    '/event',
+    '/settings',
+]
 const publicPaths = [
+    '/api',
+    '/invitations',
     '/login',
+    '/logout',
     '/register'
 ]
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname
-
     // Get the token from the cookies
-    const token = request.cookies.get('sessionToken')?.value || ''
+    const token = request.cookies.get('session_token')?.value || ''
 
     // If trying to access a public path while logged in, redirect to dashboard
     if (publicPaths.includes(path) && token) {
         return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
-    } else if (privatePaths.includes(path) && !token) {
+    } else if (Boolean(privatePaths.find(p => path.startsWith(p))) && !token) {
+        return NextResponse.redirect(new URL('/login', request.nextUrl))
+    } else if (path.startsWith('/logout') && !token) {
+        const cookieList = await cookies()
+        for (const pair of cookieList.getAll()) {
+            cookieList.set(pair.name, '', { maxAge: 0 })
+        }
         return NextResponse.redirect(new URL('/login', request.nextUrl))
     }
 }

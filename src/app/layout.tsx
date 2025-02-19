@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: '',
 }
 
-export default async function RootLayout({ children, ...rest }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let events = await getTournaments()
   return (
     <html

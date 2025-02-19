@@ -14,7 +14,7 @@ export default async function Home() {
     <>
       <Heading>
         Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
-        {cookieStore.get('name')?.value}
+        {cookieStore.get('first_name')?.value}
       </Heading>
       <div className="mt-8 flex items-end justify-between">
         <Subheading>Overview</Subheading>

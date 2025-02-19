@@ -1,5 +1,4 @@
-'use client'
-
+'use server'
 import { Avatar } from '@/components/avatar'
 import {
   Dropdown,
@@ -23,7 +22,6 @@ import {
 } from '@/components/sidebar'
 import { SidebarLayout } from '@/components/sidebar-layout'
 import { getTournaments } from '@/data'
-import { clearCookies, getCookies } from '@/lib/cookie-cutter'
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronDownIcon,
@@ -42,10 +40,9 @@ import {
   Square2StackIcon,
   TicketIcon,
 } from '@heroicons/react/20/solid'
-import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { cookies } from 'next/headers'
 
-function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
+async function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
   return (
     <DropdownMenu className="min-w-64" anchor={anchor}>
       <DropdownItem href="#">
@@ -62,12 +59,7 @@ function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' })
         <DropdownLabel>Share feedback</DropdownLabel>
       </DropdownItem>
       <DropdownDivider />
-      <DropdownItem
-        href="#"
-        onClick={() => {
-          clearCookies()
-        }}
-      >
+      <DropdownItem href="/logout">
         <ArrowRightStartOnRectangleIcon />
         <DropdownLabel>Sign out</DropdownLabel>
       </DropdownItem>
@@ -75,26 +67,17 @@ function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' })
   )
 }
 
-const NO_SIDEBARS = ['/login', '/invites']
-
-export function ApplicationLayout({
+export async function ApplicationLayout({
   events,
   children,
 }: {
   events: Awaited<ReturnType<typeof getTournaments>>
   children: React.ReactNode
 }) {
-  let pathname = usePathname()
-  const [data, setData] = useState<{ [k: string]: string }>({})
-  useEffect(() => {
-    const { email, name } = getCookies()
+  const cookieStore = await cookies()
 
-    setData({
-      ...data,
-      email: decodeURIComponent(email || data.email),
-      name: name || data.name,
-    })
-  }, [])
+  let pathname = '/'
+
   return (
     <SidebarLayout
       navbar={
@@ -111,7 +94,7 @@ export function ApplicationLayout({
         </Navbar>
       }
       sidebar={
-        NO_SIDEBARS.find((s) => pathname.startsWith(s)) ? null : (
+        !cookieStore.get('email')?.value ? null : (
           <Sidebar>
             <SidebarHeader>
               <Dropdown>
@@ -193,10 +176,10 @@ export function ApplicationLayout({
                     <Avatar src="/users/erica.jpg" className="size-10" square alt="" />
                     <span className="min-w-0">
                       <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">
-                        {data?.name || ''}
+                        {cookieStore.get('first_name')?.value || ''}
                       </span>
                       <span className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">
-                        {data?.email}
+                        {cookieStore.get('email')?.value || ''}
                       </span>
                     </span>
                   </span>

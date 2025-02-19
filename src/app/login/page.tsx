@@ -9,13 +9,18 @@ import { Input } from '@/components/input'
 import { Text } from '@/components/text'
 import Logo from '@/images/logos/mustang.png'
 import Image from 'next/image'
-import { redirect } from 'next/navigation'
 import { FormEvent, useState } from 'react'
 // import { Address } from './address'
+function isValidEmail(email: string) {
+  const re =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  return re.test(String(email).toLowerCase())
+}
 
 export default function Login() {
   const [isLoading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [email, setEmail] = useState('')
 
   return (
     <form
@@ -40,9 +45,11 @@ export default function Login() {
           method: 'POST',
         })
           .then((res) => {
+            console.log({ res })
             res.json().then((data) => {
-              if (data.id) {
-                redirect('/dashboard')
+              console.log({ data })
+              if (data.session_id) {
+                location.href = '/dashboard'
               } else {
                 setError('Invalid email or password')
               }
@@ -77,6 +84,7 @@ export default function Login() {
             name="email"
             placeholder="info@example.com"
             autoComplete="off"
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
       </section>
@@ -110,6 +118,40 @@ export default function Login() {
       <Divider className="my-10" soft />
 
       <div className="flex justify-end gap-4">
+        {email && isValidEmail(email) && (
+          <Button
+            type="button"
+            plain
+            onClick={() => {
+              setLoading(true)
+
+              // const payload = {
+              //   email,
+              // }
+              // fetch('/api/reset-password', {
+              //   headers: {
+              //     contentType: 'application/json',
+              //   },
+              //   body: JSON.stringify(payload),
+              //   method: 'POST',
+              // })
+              //   .then((res) => {
+              //     res.json().then((data) => {
+              //       if (data.id) {
+              //         location.href = '/dashboard'
+              //       } else {
+              //         setError('Invalid email or password')
+              //       }
+              //     })
+              //   })
+              //   .finally(() => {
+              //     setLoading(false)
+              //   })
+            }}
+          >
+            Click here to request a password reset email
+          </Button>
+        )}
         <Button type="submit" disabled={isLoading}>
           Login
         </Button>

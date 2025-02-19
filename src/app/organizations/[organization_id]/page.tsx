@@ -4,13 +4,16 @@ import { Heading } from '@/components/heading'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { getMembers } from '@/data'
 import type { Metadata } from 'next'
+import { list } from '../actions'
 
 export const metadata: Metadata = {
   title: 'Members',
 }
 
-export default async function Members() {
+export default async function OrganizationPage() {
   let orders = await getMembers()
+
+  const players = await list()
 
   return (
     <>
