@@ -22,25 +22,24 @@ import {
 } from '@/components/sidebar'
 import { SidebarLayout } from '@/components/sidebar-layout'
 import { getTournaments } from '@/data'
+import { getOrganizationsByUserId } from '@/models/organization'
 import {
   ArrowRightStartOnRectangleIcon,
-  ChevronDownIcon,
   ChevronUpIcon,
-  Cog8ToothIcon,
   LightBulbIcon,
-  PlusIcon,
   ShieldCheckIcon,
   UserCircleIcon,
 } from '@heroicons/react/16/solid'
 import {
+  CalendarIcon,
   Cog6ToothIcon,
   HomeIcon,
   QuestionMarkCircleIcon,
   SparklesIcon,
-  Square2StackIcon,
-  TicketIcon,
+  UserGroupIcon,
 } from '@heroicons/react/20/solid'
 import { cookies } from 'next/headers'
+import { OrganizationDropdown } from './organizations/dropdown'
 
 async function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
   return (
@@ -75,8 +74,14 @@ export async function ApplicationLayout({
   children: React.ReactNode
 }) {
   const cookieStore = await cookies()
+  let organization_id = cookieStore.get('organization_id')?.value || ''
 
-  let pathname = '/'
+  const organizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
+  if (!organization_id) {
+    organization_id = organizations[0]?.organization_id || ''
+  }
+
+  const basepath = `/organizations/${organization_id}`
 
   return (
     <SidebarLayout
@@ -97,50 +102,24 @@ export async function ApplicationLayout({
         !cookieStore.get('email')?.value ? null : (
           <Sidebar>
             <SidebarHeader>
-              <Dropdown>
-                <DropdownButton as={SidebarItem}>
-                  <Avatar src="/teams/catalyst.svg" />
-                  <SidebarLabel>ClubAthletix</SidebarLabel>
-                  <ChevronDownIcon />
-                </DropdownButton>
-                <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
-                  <DropdownItem href="/settings">
-                    <Cog8ToothIcon />
-                    <DropdownLabel>Settings</DropdownLabel>
-                  </DropdownItem>
-                  <DropdownDivider />
-                  <DropdownItem href="#">
-                    <Avatar slot="icon" src="/teams/catalyst.svg" />
-                    <DropdownLabel>ClubAthletix</DropdownLabel>
-                  </DropdownItem>
-                  <DropdownItem href="#">
-                    <Avatar slot="icon" initials="BE" className="bg-purple-500 text-white" />
-                    <DropdownLabel>Big Tournaments</DropdownLabel>
-                  </DropdownItem>
-                  <DropdownDivider />
-                  <DropdownItem href="#">
-                    <PlusIcon />
-                    <DropdownLabel>New team&hellip;</DropdownLabel>
-                  </DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
+              <OrganizationDropdown data={organizations} />
             </SidebarHeader>
 
             <SidebarBody>
               <SidebarSection>
-                <SidebarItem href="/" current={pathname === '/'}>
+                <SidebarItem href={basepath}>
                   <HomeIcon />
                   <SidebarLabel>Home</SidebarLabel>
                 </SidebarItem>
-                <SidebarItem href="/events" current={pathname.startsWith('/events')}>
-                  <Square2StackIcon />
-                  <SidebarLabel>Tournaments</SidebarLabel>
+                <SidebarItem href={`${basepath}/teams`}>
+                  <UserGroupIcon />
+                  <SidebarLabel>Teams</SidebarLabel>
                 </SidebarItem>
-                <SidebarItem href="/members" current={pathname.startsWith('/members')}>
-                  <TicketIcon />
-                  <SidebarLabel>Members</SidebarLabel>
+                <SidebarItem href={`${basepath}/schedules`}>
+                  <CalendarIcon />
+                  <SidebarLabel>Schedules</SidebarLabel>
                 </SidebarItem>
-                <SidebarItem href="/settings" current={pathname.startsWith('/settings')}>
+                <SidebarItem href="/settings">
                   <Cog6ToothIcon />
                   <SidebarLabel>Settings</SidebarLabel>
                 </SidebarItem>

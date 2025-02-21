@@ -30,7 +30,7 @@ export default async function Tournament({ params }: { params: { id: string } })
       <div className="max-lg:hidden">
         <Link href="/tournaments" className="inline-flex items-center gap-2 text-sm/6 text-zinc-500 dark:text-zinc-400">
           <ChevronLeftIcon className="size-4 fill-zinc-400 dark:fill-zinc-500" />
-          Tournaments
+          Schedule
         </Link>
       </div>
       <div className="mt-4 flex flex-wrap items-end justify-between gap-4">

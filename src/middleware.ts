@@ -6,26 +6,29 @@ const privatePaths = [
     '/dashboard',
     '/member',
     '/organization',
+    '/standing',
     '/tournament',
     '/event',
     '/settings',
+    '/?',
 ]
 const publicPaths = [
     '/api',
     '/invitations',
     '/login',
     '/logout',
-    '/register'
+    '/register',
 ]
 export async function middleware(request: NextRequest) {
     const path = request.nextUrl.pathname
     // Get the token from the cookies
     const token = request.cookies.get('session_token')?.value || ''
-
+    const session = request.cookies.get('session_id')?.value || ''
     // If trying to access a public path while logged in, redirect to dashboard
-    if (publicPaths.includes(path) && token) {
+
+    if (publicPaths.includes(path) && session) {
         return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
-    } else if (Boolean(privatePaths.find(p => path.startsWith(p))) && !token) {
+    } else if (Boolean(privatePaths.find(p => path.startsWith(p)) || path === '/') && !token) {
         return NextResponse.redirect(new URL('/login', request.nextUrl))
     } else if (path.startsWith('/logout') && !token) {
         const cookieList = await cookies()
@@ -34,4 +37,6 @@ export async function middleware(request: NextRequest) {
         }
         return NextResponse.redirect(new URL('/login', request.nextUrl))
     }
+
+    return NextResponse.next()
 }

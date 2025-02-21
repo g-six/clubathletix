@@ -1,8 +1,7 @@
-import { cookies } from 'next/headers'
 import { prisma } from '@/prisma'
 import bcrypt from 'bcryptjs'
+import { createSession } from '@/models/session'
 
-const hoursBeforeExpiry = 0.5
 export async function POST(request: Request) {
     const payload = await request.json()
     let session_user: {
@@ -73,53 +72,10 @@ export async function POST(request: Request) {
         } as {
             [k: string]: string
         }
-        await prisma.session.deleteMany({
-            where: {
-                user_id
-            }
-        })
-
-        const expires = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)
-        const session_token = crypto.randomUUID()
-
-        const session = await prisma.session.create({
-            data: {
-                user_id,
-                expires,
-                session_token,
-            }
-        })
-        session_user.session = session
-        const cookieStore = await cookies()
-        Object.keys(user).filter(name => !name.toLowerCase().includes('password') && user[name] && typeof user[name] === 'string').forEach(name => {
-            const value = user[name] as string
-            const cookie = {
-                name,
-                value,
-                expires: new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000),
-                path: '/',
-            }
-
-            cookieStore.set(cookie)
-        })
-
-        Object.entries(session)
-            .filter(([_, value]) =>
-                typeof value === 'string' && _ !== 'user_id'
-            )
-            .forEach(([name, v]) => {
-                const value = v as string
-                const cookie = {
-                    name: name === 'session_id' ? 'session_id' : name,
-                    value,
-                    expires: session.expires,
-                    path: '/',
-                }
-                cookieStore.set(cookie)
-            })
+        session_user.session = await createSession(user_id)
 
         return Response.json({
-            ...session,
+            ...(session_user.session || {}),
             user_id: undefined,
             user,
         })

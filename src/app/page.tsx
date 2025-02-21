@@ -4,12 +4,15 @@ import { Heading, Subheading } from '@/components/heading'
 import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { getRecentMembers } from '@/data'
+import { getOrganizationsByUserId } from '@/models/organization'
 import { cookies } from 'next/headers'
+import { notFound } from 'next/navigation'
 
 export default async function Home() {
   const cookieStore = await cookies()
+  let ogranizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
   let orders = await getRecentMembers()
-
+  if (!ogranizations.length) notFound()
   return (
     <>
       <Heading>

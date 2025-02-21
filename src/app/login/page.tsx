@@ -45,9 +45,7 @@ export default function Login() {
           method: 'POST',
         })
           .then((res) => {
-            console.log({ res })
             res.json().then((data) => {
-              console.log({ data })
               if (data.session_id) {
                 location.href = '/dashboard'
               } else {

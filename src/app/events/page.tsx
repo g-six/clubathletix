@@ -11,7 +11,7 @@ import { EllipsisVerticalIcon, MagnifyingGlassIcon } from '@heroicons/react/16/s
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Tournaments',
+  title: 'Schedule',
 }
 
 export default async function Tournaments() {
@@ -21,7 +21,7 @@ export default async function Tournaments() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-sm:w-full sm:flex-1">
-          <Heading>Tournaments</Heading>
+          <Heading>Schedule</Heading>
           <div className="mt-4 flex max-w-xl gap-4">
             <div className="flex-1">
               <InputGroup>
