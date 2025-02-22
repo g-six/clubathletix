@@ -39,4 +39,18 @@ export async function createMatch(payload: unknown) {
     }
 }
 
+export async function getMatch(match_id: string) {
+    if (!match_id) {
+        console.log('Invalid match id', match_id)
+        return
+    }
+    try {
+        const match = await fetch(`/api/matches/${match_id}`)
+        return await match.json()
+    } catch (error) {
+        console.log('error')
+        console.log(error)
+    }
+}
+
 export type CreateMatch = Prisma.Args<typeof prisma.Match, 'create'>['data']

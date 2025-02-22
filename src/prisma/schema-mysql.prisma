@@ -320,7 +320,7 @@ model Match {
   match_date      String
   timezone        String        @default("UTC")
   location        String
-  result          String?       @default("win")
+  result          String?
   home_or_away    String?       @default("home")
   video_url       String?
   status          String        @default("active")

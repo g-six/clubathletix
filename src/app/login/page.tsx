@@ -47,7 +47,9 @@ export default function Login() {
           .then((res) => {
             res.json().then((data) => {
               if (data.session_id) {
-                location.href = '/dashboard'
+                if (data.organization_id) {
+                  location.href = `/organizations/${data.organization_id}`
+                } else location.href = '/dashboard'
               } else {
                 setError('Invalid email or password')
               }
@@ -63,7 +65,7 @@ export default function Login() {
           src={Logo}
           alt="ClubAthletix"
           className="mx-auto w-auto text-slate-900"
-          sizes="(min-width: 1280px) 3rem, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+          sizes="(min-width: 1280px) 3rem, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 20vw"
           priority
         />
         Login to ClubAthletix
@@ -115,7 +117,7 @@ export default function Login() {
 
       <Divider className="my-10" soft />
 
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col-reverse justify-end gap-4 md:flex-row">
         {email && isValidEmail(email) && (
           <Button
             type="button"

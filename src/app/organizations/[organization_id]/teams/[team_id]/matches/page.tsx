@@ -8,7 +8,7 @@ import { getMember } from '@/data'
 import { BanknotesIcon, CalendarIcon, ChevronLeftIcon, CreditCardIcon } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { MatchDialog } from '../match.dialog'
+import { MatchDialog } from '../../../../../../components/organizations/match.dialog'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   let order = await getMember(params.id)

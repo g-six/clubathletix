@@ -5,17 +5,42 @@ import { getOrganizationsByUserId } from './organization'
 
 const hoursBeforeExpiry = 0.5
 
-export async function createSession(user_id: string): Promise<CreateSession> {
+export async function createSession(user_id: string, initialise?: boolean): Promise<CreateSession> {
+    const cookieStore = await cookies()
+    let session_id = cookieStore.get('session_id')?.value || ''
+    let session_token = crypto.randomUUID()
+    let session: CreateSession = undefined
+    if (session_id) {
+        session = await prisma.session.findFirst({
+            where: {
+                session_id,
+                user_id,
+            },
+            include: {
+                user: {
+                    select: {
+                        first_name: true,
+                        last_name: true,
+                        email: true,
+                        phone: true,
+                        timezone: true,
+                    }
+                }
+            }
+        })
+    }
+
     await prisma.session.deleteMany({
         where: {
             user_id
         }
     })
 
-    const expires = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)
-    const session_token = crypto.randomUUID()
+    if (!session && !initialise) return
 
-    const session = await prisma.session.create({
+    const expires = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)
+
+    session = await prisma.session.create({
         data: {
             user_id,
             expires,
@@ -28,8 +53,6 @@ export async function createSession(user_id: string): Promise<CreateSession> {
             user_id
         }
     })
-
-    const cookieStore = await cookies()
 
     Object.entries(user)
         .filter(([_, value]) =>
@@ -45,7 +68,6 @@ export async function createSession(user_id: string): Promise<CreateSession> {
             }
             cookieStore.set(cookie)
         })
-    let session_id = ''
     Object.entries(session)
         .filter(([_, value]) =>
             typeof value === 'string' && _ !== 'user_id'

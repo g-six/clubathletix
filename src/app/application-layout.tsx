@@ -1,14 +1,8 @@
 'use server'
 import { Avatar } from '@/components/avatar'
-import {
-  Dropdown,
-  DropdownButton,
-  DropdownDivider,
-  DropdownItem,
-  DropdownLabel,
-  DropdownMenu,
-} from '@/components/dropdown'
+import { Dropdown, DropdownButton } from '@/components/dropdown'
 import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '@/components/navbar'
+import { AccountDropdownMenu } from '@/components/session/account.dropdown'
 import {
   Sidebar,
   SidebarBody,
@@ -23,13 +17,7 @@ import {
 import { SidebarLayout } from '@/components/sidebar-layout'
 import { getTournaments } from '@/data'
 import { getOrganizationsByUserId } from '@/models/organization'
-import {
-  ArrowRightStartOnRectangleIcon,
-  ChevronUpIcon,
-  LightBulbIcon,
-  ShieldCheckIcon,
-  UserCircleIcon,
-} from '@heroicons/react/16/solid'
+import { ChevronUpIcon } from '@heroicons/react/16/solid'
 import {
   CalendarIcon,
   Cog6ToothIcon,
@@ -40,31 +28,6 @@ import {
 } from '@heroicons/react/20/solid'
 import { cookies } from 'next/headers'
 import { OrganizationDropdown } from './organizations/dropdown'
-
-async function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
-  return (
-    <DropdownMenu className="min-w-64" anchor={anchor}>
-      <DropdownItem href="#">
-        <UserCircleIcon />
-        <DropdownLabel>My account</DropdownLabel>
-      </DropdownItem>
-      <DropdownDivider />
-      <DropdownItem href="#">
-        <ShieldCheckIcon />
-        <DropdownLabel>Privacy policy</DropdownLabel>
-      </DropdownItem>
-      <DropdownItem href="#">
-        <LightBulbIcon />
-        <DropdownLabel>Share feedback</DropdownLabel>
-      </DropdownItem>
-      <DropdownDivider />
-      <DropdownItem href="/logout">
-        <ArrowRightStartOnRectangleIcon />
-        <DropdownLabel>Sign out</DropdownLabel>
-      </DropdownItem>
-    </DropdownMenu>
-  )
-}
 
 export async function ApplicationLayout({
   events,

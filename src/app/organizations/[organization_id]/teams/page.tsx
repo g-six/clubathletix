@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatDateTime } from '@/lib/date-helper'
 import { getOrganization, TeamMember, User } from '@/models/organization'
 import Link from 'next/link'
-import { MatchDialog } from './[team_id]/match.dialog'
+import { MatchDialog } from '../../../../components/organizations/match.dialog'
 
 export default async function TeamIndexPage(props: { params: Promise<unknown> }) {
   const cookieStore = await cookies()

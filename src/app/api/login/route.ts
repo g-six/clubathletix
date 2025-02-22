@@ -1,8 +1,11 @@
 import { prisma } from '@/prisma'
 import bcrypt from 'bcryptjs'
 import { createSession } from '@/models/session'
+import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
+    const cookieList = await cookies()
+    const organization_id = cookieList.get('organization_id')?.value || ''
     const payload = await request.json()
     let session_user: {
         session?: unknown,
@@ -72,12 +75,13 @@ export async function POST(request: Request) {
         } as {
             [k: string]: string
         }
-        session_user.session = await createSession(user_id)
+        session_user.session = await createSession(user_id, true)
 
         return Response.json({
             ...(session_user.session || {}),
             user_id: undefined,
             user,
+            organization_id,
         })
     }
 
