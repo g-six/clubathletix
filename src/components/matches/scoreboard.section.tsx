@@ -1,5 +1,6 @@
 'use client'
 import SpinningSoccer from '@/images/soccer.gif'
+import { getCookies } from '@/lib/cookie-cutter'
 import { CreateMatch, createMatchEvent } from '@/services/match.service'
 import { PauseCircleIcon, PlayCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import Image from 'next/image'
@@ -18,6 +19,7 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
     score: match.home_or_away === 'away' ? match.goals_for : match.goals_against,
     team: match.home_or_away === 'away' ? match.team.name : match.opponent,
   }
+  const cookieList = getCookies()
 
   const logEvent = useCallback(async (payload: { [k: string]: string }) => {
     const res = await createMatchEvent(payload)
@@ -63,6 +65,7 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
               side="home"
               className="font-mono !text-8xl"
               onSubmit={console.log}
+              disabled={!Boolean(cookieList.user_id)}
             >
               0
             </EventDialog>
@@ -81,6 +84,7 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
               onSubmit={(payload: unknown) => {
                 logEvent(payload as { [k: string]: string })
               }}
+              disabled={!Boolean(cookieList.user_id)}
             >
               0
             </EventDialog>
@@ -128,8 +132,8 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
         </section>
       </div>
 
-      <Divider className="my-8" />
-      <section className="text-center">
+      <Divider className="my-8 hidden" />
+      <section className="hidden text-center">
         <Subheading>Yellow Cards</Subheading>
 
         <EventDialog plain match={match} event="yellow_card" className="!px-0" onSubmit={console.log}>
@@ -138,8 +142,8 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
           </span>
         </EventDialog>
       </section>
-      <Divider className="my-8" />
-      <section className="text-center">
+      <Divider className="my-8 hidden" />
+      <section className="hidden text-center">
         <Subheading>Red Cards</Subheading>
 
         <EventDialog plain match={match} event="red_card" className="!px-0" onSubmit={console.log}>
