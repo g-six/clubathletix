@@ -16,6 +16,12 @@ interface EventMatch {
     name: string
   }
   opponent: string
+  events: {
+    match_event_id: string
+    player_id: string
+    event_type: string
+    event_time: string
+  }[]
   team: {
     age_group: string
     division: string
@@ -43,6 +49,30 @@ export function EventDialog(
   let [isLoading, toggleLoader] = useState(false)
   const [sideClicked, setSideClicked] = useState<'home' | 'away'>()
 
+  let goals: {
+    jersey_number?: string
+    player_id?: string
+    assist?: {
+      jersey_number?: string
+      player_id?: string
+    }
+    side: 'home' | 'away'
+  }[] = []
+  props.match.events.forEach((event) => {
+    if (props.event === 'goal' && event.player_id && event.event_type === 'goal') {
+      goals.push({
+        player_id: event.player_id,
+        side: props.match.home_or_away,
+      })
+    }
+  })
+
+  for (let i = 0; i < Number(props.match.goals_against || 0); i++) {
+    goals.push({
+      jersey_number: undefined,
+      side: props.match.home_or_away === 'home' ? 'away' : 'home',
+    })
+  }
   const [events, setEvents] = useState<{
     goals: {
       jersey_number?: string
@@ -69,11 +99,17 @@ export function EventDialog(
       side: 'home' | 'away'
     }[]
   }>({
-    goals: [],
+    goals,
     yellow_cards: [],
     red_cards: [],
     saves: [],
   })
+
+  // if (props.match.goals_for !== undefined && props.event === 'goal') {
+  //   console.log(props.match.events)
+  //   if (props.side === props.match.home_or_away) {
+  //   }
+  // }
   const [payload, setPayload] = useState<{
     [k: string]: string | undefined
   }>({
@@ -109,7 +145,7 @@ export function EventDialog(
     <>
       {side ? (
         <Button type="button" onClick={() => setIsOpen(true)} {...others}>
-          {events.goals.filter((yc) => yc.side === side).length}
+          {events.goals.filter((g) => g.side === side).length}
         </Button>
       ) : (
         <div className="relative flex w-full gap-1">

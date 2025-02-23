@@ -1,37 +1,33 @@
 import { prisma } from '@/prisma'
 import { Prisma } from '@prisma/client'
+import { cookies } from 'next/headers'
 
-export async function createMatch(payload: unknown) {
+export async function createMatchEvent(payload: unknown) {
+    const cookieStore = await cookies()
+    const created_by = cookieStore.get('user_id')?.value
     const {
-        team_id,
-        organization_id,
-        league_id,
-        match_date,
-        opponent,
-        location,
-        home_or_away,
+        match_id,
+        player_id,
+        event_type,
+        event_time,
+    } = payload as CreateMatchEvent
+    const data = {
+        match_id,
+        player_id,
+        event_type,
+        event_time,
         created_by,
-    } = payload as CreateMatch
-
+    }
     try {
-        return await prisma.match.create({
-            data: {
-                team_id,
-                organization_id,
-                league_id,
-                opponent,
-                location,
-                match_date,
-                home_or_away,
-                created_by,
-            }
+        return await prisma.matchEvent.create({
+            data
         })
     } catch (error) {
-        console.log('error')
+        console.log('createMatchEvent error', JSON.stringify(data, null, 2))
     }
 }
 
-export async function getMatch(match_id: string) {
+export async function getMatchEvents(match_id: string) {
     try {
         return await prisma.match.findUnique({
             where: {
@@ -58,15 +54,6 @@ export async function getMatch(match_id: string) {
                         }
                     }
                 },
-                events: {
-                    select: {
-                        match_event_id: true,
-                        event_type: true,
-                        player_id: true,
-                        event_time: true,
-                        video_url: true,
-                    }
-                },
                 league: {
                     select: {
                         name: true,
@@ -80,4 +67,4 @@ export async function getMatch(match_id: string) {
     }
 }
 
-export type CreateMatch = Prisma.Args<typeof prisma.Match, 'create'>['data']
+export type CreateMatchEvent = Prisma.Args<typeof prisma.matchEvent, 'create'>['data']

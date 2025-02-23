@@ -36,7 +36,12 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
         }
     })
 
-    if (!session && !initialise) return
+    if (!session && !initialise) {
+        cookieStore.delete('session_id')
+        cookieStore.delete('session_token')
+        cookieStore.delete('user_id')
+        return
+    }
 
     const expires = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)
 
@@ -74,7 +79,10 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
         )
         .forEach(([name, v]) => {
             const value = v as string
-            if (name === 'session_id') session_id = value
+            if (name === 'session_id') {
+                session_id = value
+
+            }
             const cookie = {
                 name: name === 'session_id' ? 'session_id' : name,
                 value,

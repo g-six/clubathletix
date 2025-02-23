@@ -39,6 +39,43 @@ export async function createMatch(payload: unknown) {
     }
 }
 
+export async function createMatchEvent(payload: unknown) {
+    const {
+        match_id,
+        side,
+        jersey_number,
+        player_id,
+        event,
+        assist,
+    } = payload as {
+        [k: string]: string
+    }
+
+    const event_time = new Date().toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    })
+
+    try {
+        if (event === 'goal') {
+            await fetch(`/api/matches/${match_id}/${event}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    event_time: event_time.substring(0, 5),
+                    side,
+                    jersey_number,
+                    player_id,
+                    assist
+                })
+            })
+        }
+
+    } catch (error) {
+        console.log('error')
+    }
+}
+
 export async function getMatch(match_id: string) {
     if (!match_id) {
         console.log('Invalid match id', match_id)

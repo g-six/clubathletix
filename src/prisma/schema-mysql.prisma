@@ -385,6 +385,7 @@ model MatchEvent {
   player_id      String
   event_type     String    @default("subbed_out")
   event_time     String
+  video_url      String?
   description    String?
   created_at     DateTime  @default(now())
   created_by     String
@@ -394,9 +395,8 @@ model MatchEvent {
   match          Match     @relation(fields: [match_id], references: [match_id])
   player         Player    @relation(fields: [player_id], references: [player_id])
 
-  @@unique([match_id, player_id])
   @@index([match_id, event_time])
-  @@index([player_id, event_time])
+  @@index([player_id, event_type])
   @@index([event_type, event_time])
   @@map("match_events")
 }

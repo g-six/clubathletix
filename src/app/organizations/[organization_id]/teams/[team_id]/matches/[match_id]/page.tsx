@@ -2,12 +2,21 @@ import { Divider } from '@/components/divider'
 import { Subheading } from '@/components/heading'
 import { Link } from '@/components/link'
 import ScoreBoardSection from '@/components/matches/scoreboard.section'
-import { getMember } from '@/data'
 import { formatDateTime } from '@/lib/date-helper'
 import { getMatch } from '@/models/match'
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { CalendarIcon, ChevronLeftIcon, MapPinIcon } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+const createPresignedUrlWithClient = ({ region, bucket, key }: { [k: string]: string }) => {
+  const { AWS_ACCESS_KEY_ID: accessKeyId, AWS_SECRET_ACCESS_KEY: secretAccessKey } = process.env as {
+    [k: string]: string
+  }
+  const client = new S3Client({ region, credentials: { accessKeyId, secretAccessKey } })
+  const command = new GetObjectCommand({ Bucket: bucket, Key: key })
+  return getSignedUrl(client, command, { expiresIn: 3600 })
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ match_id: string }> }): Promise<Metadata> {
   const { match_id } = await params
@@ -29,11 +38,18 @@ export default async function TeamMatchPage({ params }: { params: { match_id: st
 
   if (!match) notFound()
 
-  let order = await getMember('3000')
-
-  if (!order) {
-    notFound()
-  }
+  await Promise.all(
+    match.events.map(async (evt) => {
+      if (evt.video_url?.startsWith('s3://')) {
+        const { AWS_REGION: region, AWS_BUCKET: bucket } = process.env as { [k: string]: string }
+        evt.video_url = await createPresignedUrlWithClient({
+          region,
+          bucket,
+          key: evt.video_url.split(`s3://${bucket}/`).join(''),
+        })
+      }
+    })
+  )
 
   return (
     <>

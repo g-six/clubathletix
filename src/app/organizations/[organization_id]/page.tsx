@@ -74,15 +74,17 @@ export default async function Home(props: { params: Promise<unknown> }) {
               {matches.map((match) => (
                 <Link
                   href={`/organizations/${organization_id}/teams/${match.team.team_id}/matches/${match.match_id}`}
-                  className="group flex gap-1"
+                  className="group flex flex-wrap sm:gap-1"
                   key={match.match_id}
                 >
                   <span className="font-bold underline group-hover:text-lime-500">{match.team.name}</span>
                   <span>vs.</span>
                   <span className="flex-1 group-hover:text-zinc-200">{match.opponent}</span>
+                  <span className="w-full sm:hidden" />
                   <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
                     {formatDateTime(new Date(match.match_date))}
                   </Badge>
+                  <span className="h-2 w-full sm:hidden" />
                 </Link>
               ))}
               {matches.length === 0 && <span>No upcoming matches</span>}
