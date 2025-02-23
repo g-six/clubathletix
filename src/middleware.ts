@@ -26,16 +26,17 @@ export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session_id')?.value || ''
     // If trying to access a public path while logged in, redirect to dashboard
 
-    if (publicPaths.includes(path) && session) {
-        return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
-    } else if (Boolean(privatePaths.find(p => path.startsWith(p)) || path === '/') && !token) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl))
-    } else if (path.startsWith('/logout') && !token) {
+    if (path.startsWith('/logout')) {
         const cookieList = await cookies()
         for (const pair of cookieList.getAll()) {
             cookieList.set(pair.name, '', { maxAge: 0 })
         }
         return NextResponse.redirect(new URL('/login', request.nextUrl))
+    } else if (publicPaths.includes(path) && session) {
+        return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
+    } else if (Boolean(privatePaths.find(p => path.startsWith(p)) || path === '/')) {
+        if (!token && !path.includes('/matches/') && !path.includes('/organizations/') && !path.includes('/teams/'))
+            return NextResponse.redirect(new URL('/login', request.nextUrl))
     }
 
     return NextResponse.next()
