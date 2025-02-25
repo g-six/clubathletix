@@ -11,7 +11,7 @@ import { getAvailableLeaguesForTeam } from '@/services/league.service'
 import { createMatch } from '@/services/match.service'
 import { useCallback, useEffect, useState } from 'react'
 
-export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsWithoutRef<typeof Button>) {
+export function TrainingDialog(props: { 'team-id': string } & React.ComponentPropsWithoutRef<typeof Button>) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
   let [isInitiating, setIsInitiating] = useState(true)

@@ -10,7 +10,7 @@ import {
 } from '@/components/dropdown'
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
 import { setActiveOrganization } from '@/services/organization.service'
-import { ChevronDownIcon, Cog8ToothIcon, PlusIcon } from '@heroicons/react/16/solid'
+import { ChevronDownIcon, Cog8ToothIcon } from '@heroicons/react/16/solid'
 import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 export function OrganizationDropdown({
@@ -56,18 +56,13 @@ export function OrganizationDropdown({
           <Cog8ToothIcon />
           <DropdownLabel>Settings</DropdownLabel>
         </DropdownItem>
-        <DropdownDivider />
+        {Boolean(data.length) && <DropdownDivider />}
         {data.map((org) => (
           <DropdownItem onClick={() => setOrganization(org)} key={org.organization_id}>
             <Avatar slot="icon" src="/teams/catalyst.svg" />
             <DropdownLabel>{org.name}</DropdownLabel>
           </DropdownItem>
         ))}
-        <DropdownDivider />
-        <DropdownItem href="#">
-          <PlusIcon />
-          <DropdownLabel>New team&hellip;</DropdownLabel>
-        </DropdownItem>
       </DropdownMenu>
     </Dropdown>
   )

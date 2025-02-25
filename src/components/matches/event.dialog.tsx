@@ -4,6 +4,7 @@ import { Button } from '@/components/button'
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/dialog'
 import { Field, FieldGroup, Label } from '@/components/fieldset'
 import { Input } from '@/components/input'
+import { MatchRecord } from '@/services/match.service'
 import { useState } from 'react'
 import { Listbox, ListboxLabel, ListboxOption } from '../listbox'
 
@@ -39,7 +40,7 @@ interface EventMatch {
 }
 export function EventDialog(
   props: {
-    match: EventMatch
+    match: MatchRecord
     event: 'goal' | 'assist' | 'yellow_card' | 'red_card' | 'save'
     side?: 'home' | 'away'
     onSubmit(payload: { [k: string]: string | undefined }): void

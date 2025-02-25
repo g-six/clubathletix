@@ -43,8 +43,9 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
 
   const availableMonths = [months[currentDate.getMonth()]]
   if (!availableMonths.includes(months[nextWeek.getMonth()])) {
-    availableMonths.push(months[nextWeek.getMonth()], months[nextTwoWeeks.getMonth()])
-  } else if (!availableMonths.includes(months[nextTwoWeeks.getMonth()])) {
+    availableMonths.push(months[nextWeek.getMonth()])
+  }
+  if (!availableMonths.includes(months[nextTwoWeeks.getMonth()])) {
     availableMonths.push(months[nextTwoWeeks.getMonth()])
   }
 

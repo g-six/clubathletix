@@ -1,4 +1,4 @@
-import { Button } from '@/components/button'
+import { MatchDialog } from '@/components/organizations/match.dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { getOrganization, Player } from '@/models/organization'
 import type { Metadata } from 'next'
@@ -19,7 +19,10 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
         <div className="relative flex w-1/3">
           <TeamDropdown data={organization.teams || []} anchor="bottom start" className="w-56" selected={team_id} />
         </div>
-        <Button className="-my-0.5">Add player</Button>
+        <div className="flex gap-3">
+          {team && <MatchDialog team-id={team.team_id}>Add Player</MatchDialog>}
+          {team && <MatchDialog team-id={team.team_id}>Add Match</MatchDialog>}
+        </div>
       </div>
       <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
         <TableHead>

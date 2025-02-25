@@ -14,7 +14,6 @@ model User {
   last_name                       String
   email                           String             @unique
   phone                           String
-  timezone                        String             @default("UTC")
   hashed_password                 String
   role                            String?            @default("user")
   login_attempts                  Int?               @default(0)
@@ -30,6 +29,7 @@ model User {
   deleted_at                      DateTime?
   created_by                      String?
   updated_by                      String?
+  timezone                        String             @default("UTC")
   accounts                        Account?
   authenticator                   Authenticator[]
   parents                         PlayerParent[]
@@ -317,12 +317,8 @@ model Match {
   league_id       String
   team_id         String
   opponent        String
-  match_date      String
-  timezone        String        @default("UTC")
-  location        String
-  result          String?
   home_or_away    String?       @default("home")
-  video_url       String?
+  match_date      String
   status          String        @default("active")
   goals_for       Int?
   goals_against   Int?
@@ -332,8 +328,12 @@ model Match {
   updated_at      DateTime      @updatedAt
   updated_by      String?
   deleted_at      DateTime?
-  events          MatchEvent[]
+  location        String
+  result          String?       @default("pending")
+  timezone        String        @default("UTC")
+  video_url       String?
   players         MatchPlayer[]
+  events          MatchEvent[]
   league          League        @relation(fields: [league_id], references: [league_id])
   team            Team          @relation(fields: [team_id], references: [team_id])
 
@@ -384,19 +384,19 @@ model MatchEvent {
   match_id       String
   player_id      String
   event_type     String    @default("subbed_out")
-  event_time     String
-  video_url      String?
   description    String?
   created_at     DateTime  @default(now())
   created_by     String
   updated_at     DateTime  @updatedAt
   updated_by     String?
   deleted_at     DateTime?
-  match          Match     @relation(fields: [match_id], references: [match_id])
+  video_url      String?
+  event_minute   Int
   player         Player    @relation(fields: [player_id], references: [player_id])
+  match          Match     @relation(fields: [match_id], references: [match_id])
 
-  @@index([match_id, event_time])
+  @@index([match_id, event_minute])
   @@index([player_id, event_type])
-  @@index([event_type, event_time])
+  @@index([event_type, event_minute])
   @@map("match_events")
 }

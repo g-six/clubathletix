@@ -35,8 +35,10 @@ export async function middleware(request: NextRequest) {
     } else if (publicPaths.includes(path) && session) {
         return NextResponse.redirect(new URL('/dashboard', request.nextUrl))
     } else if (Boolean(privatePaths.find(p => path.startsWith(p)) || path === '/')) {
-        if (!token && !path.includes('/matches/') && !path.includes('/organizations/') && !path.includes('/teams/'))
+        const segments = path.split('/').filter(s => isNaN(Number(s)))
+        if (segments.includes('organizations') && segments.includes('teams') && !segments.includes('matches') && !token)
             return NextResponse.redirect(new URL('/login', request.nextUrl))
+        if (!token && path === '/') return NextResponse.redirect(new URL('/login', request.nextUrl))
     }
 
     return NextResponse.next()

@@ -1,8 +1,8 @@
 'use client'
 import SpinningSoccer from '@/images/soccer.gif'
-import { getCookies } from '@/lib/cookie-cutter'
-import { CreateMatch, createMatchEvent } from '@/services/match.service'
+import { createMatchEvent, MatchRecord } from '@/services/match.service'
 import { PauseCircleIcon, PlayCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
+import Cookies from 'js-cookie'
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Dialog, DialogBody } from '../dialog'
@@ -10,7 +10,7 @@ import { Divider } from '../divider'
 import { Subheading } from '../heading'
 import { EventDialog } from './event.dialog'
 
-export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
+export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
   const homeSide = {
     score: match.home_or_away === 'home' ? match.goals_for : match.goals_against,
     team: match.home_or_away === 'home' ? match.team.name : match.opponent,
@@ -19,35 +19,20 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
     score: match.home_or_away === 'away' ? match.goals_for : match.goals_against,
     team: match.home_or_away === 'away' ? match.team.name : match.opponent,
   }
-  const cookieList = getCookies()
 
   const logEvent = useCallback(async (payload: { [k: string]: string }) => {
     const res = await createMatchEvent(payload)
   }, [])
 
-  const events: {
-    event_type: string
-    player_id: string
-    event_time: string
-    video_url?: string
-    player: {
-      jersey_number: string
-      player_id: string
-      position: string
-      first_name: string
-      last_name: string
-    }
-  }[] = match.events.map(({ event_type, player_id, event_time, video_url }: { [k: string]: string }) => {
-    const player = match.team.players.find((player: { [k: string]: string }) => player_id === player.player_id)
+  const events = match.events.map((matchEvent) => {
+    const player = match.team.players.find((player) => matchEvent.player_id === player.player_id)
+
     return {
-      event_type,
-      player_id,
-      event_time,
-      video_url,
+      ...matchEvent,
       player: {
         ...player,
-        first_name: player.player.first_name,
-        last_name: player.player.last_name,
+        first_name: player?.player.first_name,
+        last_name: player?.player.last_name,
         player: undefined,
       },
     }
@@ -65,14 +50,14 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
               side="home"
               className="font-mono !text-8xl"
               onSubmit={console.log}
-              disabled={!Boolean(cookieList.user_id)}
+              disabled={!Boolean(Cookies.get('user_id'))}
             >
               0
             </EventDialog>
           </div>
           <div className="mb-2 text-xs font-bold lg:text-xs">{homeSide.team}</div>
         </section>
-        <section className="flex-1 text-xs font-bold">Halftime</section>
+        <section className="flex-1 text-xs font-bold">{match.result ? 'Fulltime' : 'Halftime'}</section>
         <section className="flex w-2/5 flex-col gap-2">
           <div className="mx-auto w-full overflow-hidden rounded-full">
             <EventDialog
@@ -84,7 +69,7 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
               onSubmit={(payload: unknown) => {
                 logEvent(payload as { [k: string]: string })
               }}
-              disabled={!Boolean(cookieList.user_id)}
+              disabled={!Boolean(Cookies.get('user_id'))}
             >
               0
             </EventDialog>
@@ -98,14 +83,14 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
             events.map((matchEvent) => (
               <EventRow
                 key={[
-                  matchEvent.player.player_id || matchEvent.player.jersey_number || '',
+                  matchEvent.player_id || matchEvent.player.jersey_number || '',
                   matchEvent.event_type,
-                  matchEvent.event_time,
+                  matchEvent.event_minute,
                 ]
                   .map(Boolean)
                   .join('-')}
                 name={matchEvent.player.first_name || `${match.opponent} player`}
-                minute={matchEvent.event_time}
+                minute={matchEvent.event_minute}
                 video-url={matchEvent.video_url}
                 event={matchEvent.event_type as 'goal' | 'yellow_card' | 'red_card'}
               />
@@ -116,14 +101,14 @@ export default function ScoreBoardSection({ match }: { match: CreateMatch }) {
             events.map((matchEvent) => (
               <EventRow
                 key={[
-                  matchEvent.player.player_id || matchEvent.player.jersey_number || '',
+                  matchEvent.player_id || matchEvent.player.jersey_number || '',
                   matchEvent.event_type,
-                  matchEvent.event_time,
+                  matchEvent.event_minute,
                 ]
                   .filter(Boolean)
                   .join('-')}
                 name={matchEvent.player.first_name || `${match.team.name} player`}
-                minute={matchEvent.event_time}
+                minute={matchEvent.event_minute}
                 video-url={matchEvent.video_url}
                 event={matchEvent.event_type as 'goal' | 'yellow_card' | 'red_card'}
                 away
@@ -164,10 +149,10 @@ function EventRow({
   'video-url': video_url,
 }: {
   name: string
-  minute: string
+  minute: number
   event: 'goal' | 'assist' | 'yellow_card' | 'red_card' | 'save'
   away?: boolean
-  'video-url'?: string
+  'video-url'?: string | null
 }) {
   let [isOpen, setIsOpen] = useState(false)
   let [isPlaying, togglePlaying] = useState(false)
@@ -197,45 +182,47 @@ function EventRow({
         {event === 'red_card' && <div className="mx-0.5 h-3 w-2 rotate-12 rounded-xs bg-red-500" />}
       </button>
 
-      <Dialog
-        size="3xl"
-        open={isOpen}
-        onClose={() => {
-          setIsOpen(false)
-        }}
-        className="relative overflow-hidden !p-0"
-      >
-        <DialogBody className="relative !my-0 !p-0">
-          <div className="-mx-28 -my-12">
-            <video width="1920" height="auto" id="event-video" ref={video} loop>
-              <source src={video_url} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+      {video_url && (
+        <Dialog
+          size="3xl"
+          open={isOpen}
+          onClose={() => {
+            setIsOpen(false)
+          }}
+          className="relative overflow-hidden !p-0"
+        >
+          <DialogBody className="relative !my-0 !p-0">
+            <div className="-mx-28 -my-12">
+              <video width="1920" height="auto" id="event-video" ref={video} loop>
+                <source src={video_url} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </DialogBody>
+          <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center opacity-0 hover:opacity-100">
+            <button
+              type="button"
+              onClick={() => {
+                togglePlaying(!isPlaying)
+              }}
+              className="w-24 font-bold text-white opacity-40"
+              aria-label="play"
+            >
+              {isPlaying ? <PauseCircleIcon className="size-24" /> : <PlayCircleIcon className="size-24" />}
+            </button>
           </div>
-        </DialogBody>
-        <div className="absolute top-0 left-0 flex h-full w-full items-center justify-center opacity-0 hover:opacity-100">
           <button
             type="button"
             onClick={() => {
-              togglePlaying(!isPlaying)
+              setIsOpen(false)
             }}
-            className="w-24 font-bold text-white opacity-40"
-            aria-label="play"
+            className="absolute top-4 right-4 font-bold text-black opacity-40"
+            aria-label="close"
           >
-            {isPlaying ? <PauseCircleIcon className="size-24" /> : <PlayCircleIcon className="size-24" />}
+            <XCircleIcon className="size-8" />
           </button>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(false)
-          }}
-          className="absolute top-4 right-4 font-bold text-black opacity-40"
-          aria-label="close"
-        >
-          <XCircleIcon className="size-8" />
-        </button>
-      </Dialog>
+        </Dialog>
+      )}
     </>
   )
 }

@@ -90,4 +90,21 @@ export async function getMatch(match_id: string) {
     }
 }
 
-export type CreateMatch = Prisma.Args<typeof prisma.Match, 'create'>['data']
+export type CreateMatch = Prisma.Args<typeof prisma.match, 'create'>['data']
+export type MatchRecord = CreateMatch & {
+    team: Prisma.Args<typeof prisma.team, 'create'>['data'] & {
+        players: {
+            player_id: string
+            position: string
+            jersey_number: string
+            player: {
+                first_name: string
+                last_name: string
+            }
+        }[]
+    }
+    events: (CreateMatchEvent & {
+        player: Prisma.Args<typeof prisma.player, 'findUnique'>
+    })[]
+}
+export type CreateMatchEvent = Prisma.Args<typeof prisma.matchEvent, 'create'>['data']

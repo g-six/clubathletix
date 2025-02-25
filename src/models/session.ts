@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { cookies } from 'next/headers'
 import { getOrganizationsByUserId } from './organization'
 
-const hoursBeforeExpiry = 0.5
+const hoursBeforeExpiry = 24 * 14
 
 export async function createSession(user_id: string, initialise?: boolean): Promise<CreateSession> {
     const cookieStore = await cookies()

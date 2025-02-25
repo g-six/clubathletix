@@ -70,7 +70,7 @@ export default async function TeamMatchPage({ params }: { params: { match_id: st
         <section className="text-center">
           <Subheading>Game Information</Subheading>
           <div className="isolate mt-2.5 flex flex-wrap justify-between gap-x-6 gap-y-4 text-xs">
-            <div className="flex flex-wrap gap-x-10 gap-y-4 py-1.5">
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 py-1.5">
               <span className="flex items-center gap-3 text-zinc-950 dark:text-white">
                 <MapPinIcon className="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500" />
                 <span>{match.location}</span>

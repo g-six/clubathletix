@@ -1,18 +1,18 @@
 import { Stat } from '@/app/stat'
 import { Avatar } from '@/components/avatar'
 import { Heading, Subheading } from '@/components/heading'
+import { CreateOrganizationForm } from '@/components/organizations/organization.form'
 import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { getRecentMembers } from '@/data'
 import { getOrganizationsByUserId } from '@/models/organization'
 import { cookies } from 'next/headers'
-import { notFound } from 'next/navigation'
 
 export default async function Home() {
   const cookieStore = await cookies()
   let ogranizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
   let orders = await getRecentMembers()
-  if (!ogranizations.length) notFound()
+  if (!ogranizations.length) return <CreateOrganizationForm>Start managing your organization</CreateOrganizationForm>
   return (
     <>
       <Heading>

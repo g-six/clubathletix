@@ -11,22 +11,34 @@ export async function createMatch(payload: unknown) {
         location,
         home_or_away,
         created_by,
-    } = payload as CreateMatch
-
+    } = payload as unknown as {
+        [k: string]: string
+    }
     try {
+        console.log({
+            organization_id,
+            league_id,
+            team_id,
+            opponent,
+            match_date,
+            home_or_away,
+            created_by,
+            location,
+        })
         return await prisma.match.create({
             data: {
-                team_id,
                 organization_id,
                 league_id,
+                team_id,
                 opponent,
-                location,
                 match_date,
                 home_or_away,
                 created_by,
+                location,
             }
         })
     } catch (error) {
+        console.log(error)
         console.log('error')
     }
 }
@@ -63,8 +75,8 @@ export async function getMatch(match_id: string) {
                         match_event_id: true,
                         event_type: true,
                         player_id: true,
-                        event_time: true,
                         video_url: true,
+                        event_minute: true,
                     }
                 },
                 league: {
@@ -80,4 +92,4 @@ export async function getMatch(match_id: string) {
     }
 }
 
-export type CreateMatch = Prisma.Args<typeof prisma.Match, 'create'>['data']
+export type CreateMatch = Prisma.Args<typeof prisma.match, 'create'>['data']
