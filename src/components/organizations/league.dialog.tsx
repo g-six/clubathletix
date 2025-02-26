@@ -15,12 +15,12 @@ export function CreateLeagueDialog(props: React.ComponentPropsWithoutRef<typeof 
 
   const [payload, setPayload] = useState<{
     name: string
-    start_date: Date
-    end_date: Date
+    start_date: string
+    end_date: string
   }>({
     name: '',
-    start_date: new Date(),
-    end_date: new Date(),
+    start_date: '',
+    end_date: '',
   })
 
   const handleSubmit = useCallback(async () => {
@@ -62,15 +62,13 @@ export function CreateLeagueDialog(props: React.ComponentPropsWithoutRef<typeof 
           <DateField
             disabled={isLoading}
             label="Start date"
-            onChange={(value) =>
-              setPayload({ ...payload, start_date: new Date(value.year, value.month - 1, value.day) })
-            }
+            onChange={(start_date) => setPayload({ ...payload, start_date })}
           />
 
           <DateField
             disabled={isLoading}
             label="End date"
-            onChange={(value) => setPayload({ ...payload, end_date: new Date(value.year, value.month - 1, value.day) })}
+            onChange={(end_date) => setPayload({ ...payload, end_date })}
           />
         </DialogBody>
 

@@ -22,7 +22,7 @@ export default async function Leagues({ params }: { params: Promise<unknown> }) 
     }
   )
   const teams: unknown[] = []
-
+  console.log(leagues)
   leagues?.forEach((league) => {
     if (league.teams) teams.push(...league.teams)
   })

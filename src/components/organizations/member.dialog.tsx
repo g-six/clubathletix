@@ -5,20 +5,26 @@ import { Dialog, DialogActions, DialogBody, DialogDescription, DialogTitle } fro
 import { Field, FieldGroup, Label } from '@/components/fieldset'
 import { Input } from '@/components/input'
 import { onFileChange } from '@/lib/file-helper'
+import { getOrganizationTeams } from '@/services/team.service'
 import { inviteUser } from '@/services/user.service'
 import { UserCircleIcon } from '@heroicons/react/20/solid'
-import { Prisma } from '@prisma/client'
+import { Prisma, Team } from '@prisma/client'
 import Cookies from 'js-cookie'
 import { useParams } from 'next/navigation'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import DateField from '../date'
 import { Select } from '../select'
 
-export function InviteMemberDialog(props: { 'team-id': string } & React.ComponentPropsWithoutRef<typeof Button>) {
+export function InviteMemberDialog(
+  props: { 'team-id'?: string; 'organization-id'?: string } & React.ComponentPropsWithoutRef<typeof Button>
+) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
   const params = useParams()
-  const team_id = `${params.team_id}` || props['team-id'] || undefined
+  const [teams, setTeams] = useState<Team[]>([])
+  const [team_id, selectTeamId] = useState<string | undefined>(
+    (params.team_id as string) || props['team-id'] || undefined
+  )
   const organization_id = `${params.organization_id}` || Cookies.get('organization_id') || ''
 
   const [file, setFile] = useState<string>()
@@ -40,6 +46,12 @@ export function InviteMemberDialog(props: { 'team-id': string } & React.Componen
     role: 'Parent',
     organization_id,
   })
+
+  useEffect(() => {
+    if (!Boolean(team_id)) {
+      getOrganizationTeams(organization_id).then(setTeams)
+    }
+  }, [team_id])
 
   const handleSubmit = useCallback(async () => {
     if (payload.first_name && payload.last_name && organization_id) {
@@ -111,6 +123,34 @@ export function InviteMemberDialog(props: { 'team-id': string } & React.Componen
           </label>
 
           <FieldGroup className="mt-4 grid gap-x-4 sm:grid-cols-3">
+            {teams.length && (
+              <>
+                <Field className="sm:col-span-2">
+                  <Label>Team</Label>
+                  <Select
+                    name="team_id"
+                    defaultValue={payload.team_id}
+                    disabled={isLoading}
+                    onChange={(evt) => {
+                      setPayload({
+                        ...payload,
+                        [evt.currentTarget.name]: evt.currentTarget.value,
+                      })
+                    }}
+                  >
+                    <option value="" disabled>
+                      Select team
+                    </option>
+                    {teams.map((team) => (
+                      <option key={team.team_id} value={team.team_id}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </>
+            )}
+
             <Field>
               <Label>Role</Label>
               <Select

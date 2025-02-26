@@ -5,8 +5,9 @@ import { cookies } from 'next/headers'
 import { createSession } from './session'
 import { getPresignedUrlWithClient } from './file'
 import { randomUUID } from 'crypto'
+import { createEmailNotification } from './notifications'
 
-export async function inviteUser(payload: User & { imageUrl?: string; organization_id: string; team_id?: string; player_id?: string; role: string }) {
+export async function inviteUser(payload: User & { imageUrl?: string; organization_id: string; team_id?: string; team_name?: string; player_id?: string; role: string }) {
     const cookieJar = await cookies()
     const created_by = cookieJar.get('user_id')?.value
     if (!created_by) {
@@ -19,110 +20,170 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         return
     }
 
-    const { timezone, organization_id, team_id, role, player_id, phone, imageUrl, ...input } = payload
-    const passwd = [
-        organization_id.substring(0, 3),
-        input.first_name.substring(0, 5),
-        new Date().getHours()
-    ].join('-')
-    const hashed_password = bcrypt.hashSync(passwd, process.env.AUTH_SALT)
-    let image: string | undefined = undefined
-    if (imageUrl) {
-        const imageType = imageUrl.split(';')[0].replace('data:', '')
-        const fileExtension = `${imageType.split('/')[1].toLowerCase()}`
-        if (['png', 'jpg', 'jpeg', 'webp'].includes(fileExtension)) {
-            const buf = Buffer.from(imageUrl.replace(/^data:image\/\w+;base64,/, ""), 'base64')
-            const Key = `users/${input.last_name}/profile-${randomUUID()}.${fileExtension}`.toLowerCase()
-            const putObjCommandUrl = await getPresignedUrlWithClient(Key, 'PUT')
-            const uploaded = await fetch(putObjCommandUrl, {
-                method: 'PUT',
-                body: buf,
-                headers: {
-                    'Content-Encoding': 'base64',
-                    'Content-Type': imageType
+    let user = await prisma.user.findUnique({
+        where: {
+            email: payload.email
+        },
+        include: {
+            organizations: {
+                include: {
+                    organization: true
                 }
-            })
-
-            if (uploaded.ok) {
-                image = Key
-            }
+            },
+            team_members: {
+                include: {
+                    team: true
+                }
+            },
+            players: {
+                include: {
+                    teams: true
+                }
+            },
         }
-    }
-    const data = {
-        ...input,
-        image,
-        hashed_password,
-        password_rest_token: hashed_password,
-        phone: phone || '',
-        timezone,
-    }
-
-    const user = await prisma.user.create({
-        data
     })
+    const { timezone, organization_id, team_id, team_name, role, player_id, phone, imageUrl, ...input } = payload
 
-    if (user && organization_id) {
-        const [team, org, teamMember, teamOrg] = await Promise.all([
-            prisma.team.findUnique({
-                where: {
-                    team_id,
+    if (!user?.email) {
+        const passwd = [
+            organization_id.substring(0, 3),
+            input.first_name.substring(0, 5),
+            new Date().getHours()
+        ].join('-')
+        const hashed_password = bcrypt.hashSync(passwd, process.env.AUTH_SALT)
+        let image: string | undefined = undefined
+        if (imageUrl) {
+            const imageType = imageUrl.split(';')[0].replace('data:', '')
+            const fileExtension = `${imageType.split('/')[1].toLowerCase()}`
+            if (['png', 'jpg', 'jpeg', 'webp'].includes(fileExtension)) {
+                const buf = Buffer.from(imageUrl.replace(/^data:image\/\w+;base64,/, ""), 'base64')
+                const Key = `users/${input.last_name}/profile-${randomUUID()}.${fileExtension}`.toLowerCase()
+                const putObjCommandUrl = await getPresignedUrlWithClient(Key, 'PUT')
+                const uploaded = await fetch(putObjCommandUrl, {
+                    method: 'PUT',
+                    body: buf,
+                    headers: {
+                        'Content-Encoding': 'base64',
+                        'Content-Type': imageType
+                    }
+                })
+
+                if (uploaded.ok) {
+                    image = Key
                 }
-            }) as unknown as Team,
-            prisma.organization.findUnique({
-                where: {
-                    organization_id,
-                }
-            }) as unknown as Organization,
-            prisma.teamMember.create({
-                data: {
-                    organization_id,
-                    team_id,
-                    user_id: user.user_id,
-                    role: role || 'Parent',
-                    created_by,
-                } as Prisma.TeamMemberUncheckedCreateInput
-            }),
-            prisma.userOrganization.create({
-                data: {
-                    organization_id,
-                    user_id: user.user_id,
-                    role: role || 'Parent',
-                    created_by,
-                } as Prisma.TeamMemberUncheckedCreateInput
-            })
-        ])
-        const { POSTMARK_SERVER_TOKEN, POSTMARK_ENTRYPOINT, } = process.env as { [k: string]: string }
-        const sender = [
-            session.user.first_name || 'Club Athletix',
-            session.user.last_name || ''].filter(Boolean).join(' ')
-        const emailData = {
-            From: 'Club Athletix <rey@clubathletix.com>',
-            To: `${user.email}`,
-            TemplateId: 39180237,
-            TemplateModel: {
-                player: "your player's",
-                name: input.first_name,
-                action_url: `https://clubathletix.com/invitations/accept/${user.user_id}`,
-                passwd,
-                product_name: 'Club Athletix',
-                team: `${team.name || 'your team'} at ${org?.name || 'your organization'}`,
-                sender,
             }
         }
-        const postMarkHeaders = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Postmark-Server-Token': POSTMARK_SERVER_TOKEN,
+
+        const data = {
+            ...input,
+            image,
+            hashed_password,
+            password_rest_token: hashed_password,
+            phone: phone || '',
+            timezone,
         }
 
-        const mail = await fetch(`${POSTMARK_ENTRYPOINT}/withTemplate`, {
-            method: 'POST',
-            headers: postMarkHeaders,
-            body: JSON.stringify(emailData)
+        await prisma.user.create({
+            data
         })
+        user = await prisma.user.findUnique({
+            where: {
+                email: payload.email
+            },
+            include: {
+                organizations: {
+                    include: {
+                        organization: true
+                    }
+                },
+                team_members: {
+                    include: {
+                        team: true
+                    }
+                },
+                players: {
+                    include: {
+                        teams: true
+                    }
+                },
+            }
+        })
+    }
+
+    let sendEmail = false
+    if (user && organization_id && session.user?.email) {
+        const {
+            organizations,
+            team_members,
+            user_id,
+        } = user
+        const orgMember = organizations
+            .filter(org => Boolean(org.organization))
+            .find(org => org.organization_id === organization_id)
+
+        if (orgMember) {
+            console.log('Already', ['o', 'a', 'e', 'u', 'i'].includes(orgMember.role[0].toLowerCase()) ? 'an' : 'a', orgMember.role.toLowerCase(), 'of', orgMember.organization?.name)
+        } else {
+            sendEmail = true
+            await prisma.userOrganization.create({
+                data: {
+                    organization_id,
+                    user_id,
+                    role,
+                    created_by,
+                }
+            })
+        }
+
+
+        if (team_id) {
+            const teamMembership = team_members
+                .filter(rec => Boolean(rec.team))
+                .find(rec => rec.team_id === team_id)
+            if (teamMembership) {
+                console.log('Already', ['o', 'a', 'e', 'u', 'i'].includes(teamMembership.role[0].toLowerCase()) ? 'an' : 'a', teamMembership.role.toLowerCase(), 'of', teamMembership.team?.name)
+            } else {
+                sendEmail = true
+                await prisma.teamMember.create({
+                    data: {
+                        organization_id,
+                        team_id,
+                        user_id,
+                        role,
+                        created_by,
+                    }
+                })
+            }
+        }
+
+        if (sendEmail) {
+            await createEmailNotification({
+                sender: {
+                    email: session.user.email,
+                    name: [session.user.first_name, session.user.last_name].join(' '),
+                },
+                receiver: {
+                    email: payload.email,
+                    name: [payload.first_name, payload.last_name].join(' '),
+                },
+                TemplateId: payload.team_name ? 39180237 : 39188601,
+                TemplateModel: {
+                    sender: session.user.first_name,
+                    name: payload.first_name,
+                    player: "your child's",
+                    team: payload.team_name || "team",
+                    product_name: "Club Athletix",
+                    action_url: `https://clubathletix.com/invitations/accept/${user_id}?team=${team_id}`
+                }
+            })
+        }
+        const team = await prisma.team.findUnique({
+            where: {
+                team_id,
+            }
+        }) as unknown as Team
         return {
             ...user,
-            mail,
             role,
             team_id,
             team,

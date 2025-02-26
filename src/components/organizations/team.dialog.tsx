@@ -26,11 +26,16 @@ export function TeamDialog(
     age_group: 'U13',
   })
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     toggleLoader(true)
 
-    const team = await createTeam(payload)
-    // location.reload()
+    createTeam(payload)
+      .then(() => {
+        location.reload()
+      })
+      .finally(() => {
+        toggleLoader(false)
+      })
   }, [payload])
 
   return (

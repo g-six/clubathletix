@@ -10,7 +10,7 @@ import {
 } from '@/components/dropdown'
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
 import { setActiveOrganization } from '@/services/organization.service'
-import { ChevronDownIcon, Cog8ToothIcon } from '@heroicons/react/16/solid'
+import { ChevronDownIcon, Cog8ToothIcon, UserGroupIcon } from '@heroicons/react/16/solid'
 import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 export function OrganizationDropdown({
@@ -55,17 +55,22 @@ export function OrganizationDropdown({
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
-        <DropdownItem href="/settings">
+        <DropdownItem href={`/organizations/${organization?.organization_id}/settings`}>
           <Cog8ToothIcon />
           <DropdownLabel>Settings</DropdownLabel>
         </DropdownItem>
         {Boolean(data.length) && <DropdownDivider />}
         {data.map((org) => (
           <DropdownItem onClick={() => setOrganization(org)} key={org.organization_id}>
-            <Avatar slot="icon" src={organization?.organization.logo || `/teams/catalyst.svg`} />
+            <Avatar slot="icon" src={org.organization.logo || `/teams/catalyst.svg`} />
             <DropdownLabel>{org.name}</DropdownLabel>
           </DropdownItem>
         ))}
+        <DropdownDivider />
+        <DropdownItem href="/organizations/new">
+          <UserGroupIcon />
+          <DropdownLabel>Create organization&hellip;</DropdownLabel>
+        </DropdownItem>
       </DropdownMenu>
     </Dropdown>
   )

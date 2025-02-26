@@ -162,6 +162,49 @@ export async function createOrganization(payload: Prisma.OrganizationCreateInput
     return organization
 }
 
+export async function updateOrganization(organization_id: string, payload: Prisma.OrganizationUpdateInput) {
+    let { logo: sourceLogo, domain, ...input } = payload
+    const data = Prisma.validator<Prisma.OrganizationUpdateInput>()({
+        domain: domain || undefined,
+        logo: undefined as unknown as string,
+        ...input
+    })
+
+    if (sourceLogo) {
+        try {
+            const imageType = `${sourceLogo}`.split(';')[0].replace('data:', '')
+            const buf = Buffer.from(`${sourceLogo}`.replace(/^data:image\/\w+;base64,/, ""), 'base64')
+            const Key = `${input.short_name}/${organization_id}/logo.${imageType.split('/')[1]}`.toLowerCase()
+
+            const putObjCommandUrl = await getPresignedUrlWithClient(Key, 'PUT')
+
+            const uploaded = await fetch(putObjCommandUrl, {
+                method: 'PUT',
+                body: buf,
+                headers: {
+                    'Content-Encoding': 'base64',
+                    'Content-Type': imageType
+                }
+            })
+
+            if (uploaded.ok) {
+                data.logo = Key
+            }
+
+        } catch (error) {
+            console.log('Error in logo')
+        }
+    }
+    const organization = await prisma.organization.update({
+        where: {
+            organization_id
+        },
+        data
+    })
+
+    return organization
+}
+
 export type CreateOrganization = Prisma.Args<typeof prisma.organization, 'create'>['data']
 export type Organization = Prisma.Args<typeof prisma.organization, 'findUnique'>['data']
 export type Team = Prisma.Args<typeof prisma.team, 'findUnique'>['data']

@@ -5,6 +5,7 @@ import { Badge } from '@/components/badge'
 import { Card } from '@/components/card'
 import { Heading, Subheading } from '@/components/heading'
 import { CreateLeagueDialog } from '@/components/organizations/league.dialog'
+import { InviteMemberDialog } from '@/components/organizations/member.dialog'
 import { CreateOrganizationForm } from '@/components/organizations/organization.form'
 import { TeamDialog } from '@/components/organizations/team.dialog'
 import { Select } from '@/components/select'
@@ -46,8 +47,9 @@ export default async function Home(props: { params: Promise<unknown> }) {
       </div>
       <div className="mt-4 grid gap-8 lg:grid-cols-2">
         <Card
-          title="Upcoming matches"
-          href={matches.length > 0 ? `/organizations/${organization_id}/matches` : undefined}
+          title="Upcoming matches / trainings"
+          CreateDialog={<span />}
+          href={`/organizations/${organization_id}/matches`}
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
               {matches.map((match) => (
@@ -73,22 +75,13 @@ export default async function Home(props: { params: Promise<unknown> }) {
           }
         />
         <Card
-          href="/matches/new"
-          title="Recent notifications"
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">Schedule updated</span>
-                <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                  Team A v Team B
-                </Badge>
-              </Link>
-            </div>
-          }
-        />
-        <Card
           href={leagues.length > 0 ? `/organizations/${organization_id}/leagues` : undefined}
           title="Leagues"
+          CreateDialog={
+            <CreateLeagueDialog skeleton organization-id={organization_id} className="!text-zinc-500">
+              Create another league
+            </CreateLeagueDialog>
+          }
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
               {leagues.map((record) => (
@@ -114,29 +107,13 @@ export default async function Home(props: { params: Promise<unknown> }) {
         />
 
         <Card
-          href="/matches/new"
-          title="Standings"
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U15 Titans</span>
-                <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                  #3 - 14 pts
-                </Badge>
-              </Link>
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U14 Selects</span>
-                <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                  #2 - 15 pts
-                </Badge>
-              </Link>
-            </div>
-          }
-        />
-
-        <Card
           href={teams.length > 0 ? `/organizations/${organization_id}/teams` : undefined}
-          title="My teams"
+          title="Teams"
+          CreateDialog={
+            <TeamDialog skeleton organization-id={organization_id} className="!text-zinc-500" leagues={leagues}>
+              Add another team
+            </TeamDialog>
+          }
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
               {teams.map((team) => (
@@ -190,28 +167,35 @@ export default async function Home(props: { params: Promise<unknown> }) {
           }
         />
         <Card
-          href={teams.length > 0 ? `/organizations/${organization_id}/teams` : undefined}
-          title="Members"
+          title="Organization Members"
+          href={`/organizations/${organization_id}/members`}
+          CreateDialog={
+            <InviteMemberDialog className="!text-zinc-500" skeleton organization-id={organization_id}>
+              Invite another member
+            </InviteMemberDialog>
+          }
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              {teams.map((team) => (
+              {members.map((rec) => (
                 <Link
-                  href={`/organizations/${organization_id}/teams/${team.team_id}`}
+                  href={`/organizations/${organization_id}/members/${rec.team_member_id}`}
                   className="group flex gap-1"
-                  key={team.team_id}
+                  key={rec.team_member_id}
                 >
-                  <span className="flex-1 font-bold group-hover:text-lime-500">{team.name}</span>
-                  <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                    {team.age_group}
+                  <Avatar
+                    src={rec.user.image ? `/api/files/${rec.user.image}` : null}
+                    initials={rec.user.image ? undefined : [rec.user.first_name[0], rec.user.last_name[0]].join('')}
+                    className="size-4"
+                    center
+                  />
+                  <span>{[rec.user.last_name, rec.user.first_name].filter(Boolean).join(', ')}</span>
+                  <span className="flex-1 font-bold capitalize group-hover:text-lime-500"></span>
+                  <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3 capitalize">
+                    {(teams.find((team) => team.team_id === rec.team_id) || {})?.name?.toLowerCase()}{' '}
                   </Badge>
-                  {team.division && (
-                    <Badge
-                      color={team.division.includes('1') ? 'lime' : 'zinc'}
-                      text-size="text-xs/5 sm:text-[0.65rem]/3"
-                    >
-                      Div {team.division}
-                    </Badge>
-                  )}
+                  <Badge color="zinc" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                    <span className="capitalize">{rec.role.toLowerCase()}</span>
+                  </Badge>
                 </Link>
               ))}
               {teams.length === 0 && (
