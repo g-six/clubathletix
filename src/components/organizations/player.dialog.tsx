@@ -8,11 +8,17 @@ import { onFileChange } from '@/lib/file-helper'
 import { updatePlayer } from '@/models/player'
 import { createPlayer } from '@/services/player.service'
 import { UserCircleIcon } from '@heroicons/react/20/solid'
-import { Prisma } from '@prisma/client'
+import { Prisma, TeamMember } from '@prisma/client'
 import { useCallback, useState } from 'react'
 import DateField from '../date'
+import { Select } from '../select'
 
-export function CreatePlayerDialog(props: { 'team-id': string } & React.ComponentPropsWithoutRef<typeof Button>) {
+export function CreatePlayerDialog(
+  props: {
+    'team-id': string
+    members: (TeamMember & { user: { first_name: string; last_name: string } })[]
+  } & React.ComponentPropsWithoutRef<typeof Button>
+) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
 
@@ -24,11 +30,19 @@ export function CreatePlayerDialog(props: { 'team-id': string } & React.Componen
     birth_month?: number
     birth_year?: number
     team_id: string
+    members: (TeamMember & { user: { first_name: string; last_name: string } })[]
   }>({
     first_name: '',
     last_name: '',
     team_id: props['team-id'],
+    members: props.members,
   })
+
+  const retrieveMembers = useCallback(async () => {
+    if (payload.team_id) {
+      const memebrs = await getTam
+    }
+  }, [])
 
   const handleSubmit = useCallback(async () => {
     if (payload.first_name && payload.last_name) {
@@ -149,6 +163,30 @@ export function CreatePlayerDialog(props: { 'team-id': string } & React.Componen
                 autoFocus
               />
             </Field>
+            <Field className="sm:col-span-2">
+              <Label>Parent / Guardian.</Label>
+              <Select
+                name="parent_id"
+                defaultValue="Parent"
+                disabled={isLoading}
+                onChange={(evt) => {
+                  setPayload({
+                    ...payload,
+                    [evt.currentTarget.name]: evt.currentTarget.value,
+                  })
+                }}
+              >
+                <option value="" disabled>
+                  Select&hellip;
+                </option>
+
+                {props.members.map((member) => (
+                  <option key={member.user_id} value={member.user_id}>
+                    {member.user.first_name} {member.user.last_name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
           </FieldGroup>
         </DialogBody>
 
@@ -184,7 +222,9 @@ export function CreatePlayerDialog(props: { 'team-id': string } & React.Componen
   )
 }
 export function EditPlayerDialog(
-  props: { data: Prisma.PlayerUncheckedUpdateInput } & React.ComponentPropsWithoutRef<typeof Button>
+  props: { data: Prisma.PlayerUncheckedUpdateInput; members: TeamMember[] } & React.ComponentPropsWithoutRef<
+    typeof Button
+  >
 ) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)

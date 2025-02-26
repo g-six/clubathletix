@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma'
-import { Prisma, User } from '@prisma/client'
+import { Organization, Prisma, User } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { createSession } from './session'
@@ -38,23 +38,35 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
 
 
     if (user && organization_id) {
-        const team = await prisma.teamMember.create({
-            data: {
-                organization_id,
-                team_id,
-                user_id: user.user_id,
-                role: role || 'Parent',
-                created_by,
-            } as Prisma.TeamMemberUncheckedCreateInput
-        })
-        const org = await prisma.userOrganization.create({
-            data: {
-                organization_id,
-                user_id: user.user_id,
-                role: role || 'Parent',
-                created_by,
-            } as Prisma.TeamMemberUncheckedCreateInput
-        })
+        const [team, org, teamMember, teamOrg] = await Promise.all([
+            prisma.team.findUnique({
+                where: {
+                    team_id,
+                }
+            }) as unknown as Team,
+            prisma.organization.findUnique({
+                where: {
+                    organization_id,
+                }
+            }) as unknown as Organization,
+            prisma.teamMember.create({
+                data: {
+                    organization_id,
+                    team_id,
+                    user_id: user.user_id,
+                    role: role || 'Parent',
+                    created_by,
+                } as Prisma.TeamMemberUncheckedCreateInput
+            }),
+            prisma.userOrganization.create({
+                data: {
+                    organization_id,
+                    user_id: user.user_id,
+                    role: role || 'Parent',
+                    created_by,
+                } as Prisma.TeamMemberUncheckedCreateInput
+            })
+        ])
         const { POSTMARK_SERVER_TOKEN, POSTMARK_ENTRYPOINT, } = process.env as { [k: string]: string }
         const sender = [
             session.user.first_name || 'Club Athletix',
@@ -69,9 +81,8 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
                 action_url: `https://clubathletix.com/invitations/accept/${user.user_id}`,
                 passwd,
                 product_name: 'Club Athletix',
+                team: `${team.name || 'your team'} at ${org?.name || 'your organization'}`,
                 sender,
-
-
             }
         }
         const postMarkHeaders = {

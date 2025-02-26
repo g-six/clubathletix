@@ -65,7 +65,9 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
 
       <div className="mt-24 flex justify-between">
         <Heading>Players</Heading>
-        <CreatePlayerDialog team-id={team_id}>Add player</CreatePlayerDialog>
+        <CreatePlayerDialog team-id={team_id} members={team?.members || []}>
+          Add player
+        </CreatePlayerDialog>
       </div>
       <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
         <TableHead>
