@@ -9,6 +9,11 @@ export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session_id')?.value || ''
     // If trying to access a public path while logged in, redirect to dashboard
 
+    if (path.startsWith('/logout') && token) {
+        request.cookies.clear()
+        // return NextResponse.redirect(new URL('/login', request.url))
+    }
+
     if (!token && !session) {
         return NextResponse.redirect(new URL('/login', request.url))
     }

@@ -1,13 +1,11 @@
 import { prisma } from '@/prisma'
-import bcrypt from 'bcryptjs'
-import { createSession } from '@/models/session'
 import { cookies } from 'next/headers'
 
 export async function DELETE(request: Request) {
     const cookieStore = await cookies()
     const session_id = cookieStore.get('session_id')?.value || ''
     if (session_id) {
-        await prisma.session.delete({
+        await prisma.session.deleteMany({
             where: {
                 session_id
             }
