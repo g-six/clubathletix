@@ -3,6 +3,8 @@ import { Organization, Prisma, User } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { createSession } from './session'
+import { getPresignedUrlWithClient } from './file'
+import { randomUUID } from 'crypto'
 
 export async function inviteUser(payload: User & { imageUrl?: string; organization_id: string; team_id?: string; player_id?: string; role: string }) {
     const cookieJar = await cookies()
@@ -24,8 +26,31 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         new Date().getHours()
     ].join('-')
     const hashed_password = bcrypt.hashSync(passwd, process.env.AUTH_SALT)
+    let image: string | undefined = undefined
+    if (imageUrl) {
+        const imageType = imageUrl.split(';')[0].replace('data:', '')
+        const fileExtension = `${imageType.split('/')[1].toLowerCase()}`
+        if (['png', 'jpg', 'jpeg', 'webp'].includes(fileExtension)) {
+            const buf = Buffer.from(imageUrl.replace(/^data:image\/\w+;base64,/, ""), 'base64')
+            const Key = `users/${input.last_name}/profile-${randomUUID()}.${fileExtension}`.toLowerCase()
+            const putObjCommandUrl = await getPresignedUrlWithClient(Key, 'PUT')
+            const uploaded = await fetch(putObjCommandUrl, {
+                method: 'PUT',
+                body: buf,
+                headers: {
+                    'Content-Encoding': 'base64',
+                    'Content-Type': imageType
+                }
+            })
+
+            if (uploaded.ok) {
+                image = Key
+            }
+        }
+    }
     const data = {
         ...input,
+        image,
         hashed_password,
         password_rest_token: hashed_password,
         phone: phone || '',
@@ -35,7 +60,6 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
     const user = await prisma.user.create({
         data
     })
-
 
     if (user && organization_id) {
         const [team, org, teamMember, teamOrg] = await Promise.all([

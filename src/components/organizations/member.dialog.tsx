@@ -37,7 +37,7 @@ export function InviteMemberDialog(props: { 'team-id': string } & React.Componen
     email: '',
     phone: '',
     team_id,
-    role: 'Coach',
+    role: 'Parent',
     organization_id,
   })
 
@@ -115,7 +115,7 @@ export function InviteMemberDialog(props: { 'team-id': string } & React.Componen
               <Label>Role</Label>
               <Select
                 name="role"
-                defaultValue="Parent"
+                defaultValue={payload.role}
                 disabled={isLoading}
                 onChange={(evt) => {
                   setPayload({

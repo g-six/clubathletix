@@ -39,8 +39,7 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
       <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
         <TableHead>
           <TableRow>
-            <TableHeader>First name</TableHeader>
-            <TableHeader>Last name</TableHeader>
+            <TableHeader>Name</TableHeader>
             <TableHeader className="text-right">Role</TableHeader>
           </TableRow>
         </TableHead>
@@ -52,9 +51,15 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
                 href={`${record.team_id}/member/${record.team_member_id}`}
                 title={`${record.team_member_id}`}
               >
-                <TableCell>{record.user.first_name}</TableCell>
                 <TableCell>
+                  {record.user.image && (
+                    <Avatar src={`/api/files/${record.user.image}`} className="mr-2 size-6 overflow-clip" />
+                  )}
                   <span>{record.user.last_name}</span>
+                  <span>
+                    {record.user.last_name && record.user.first_name && ', '}
+                    {record.user.first_name}
+                  </span>
                 </TableCell>
                 <TableCell className="text-right capitalize">{record.role}</TableCell>
               </TableRow>
