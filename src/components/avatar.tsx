@@ -10,11 +10,13 @@ type AvatarProps = {
   initials?: string
   alt?: string
   className?: string
+  center?: boolean
 }
 
 export function Avatar({
   src = null,
   square = false,
+  center = false,
   initials,
   alt = '',
   className,
@@ -30,7 +32,8 @@ export function Avatar({
         'inline-grid shrink-0 align-middle [--avatar-radius:20%] [--ring-opacity:20%] *:col-start-1 *:row-start-1',
         'outline -outline-offset-1 outline-black/(--ring-opacity) dark:outline-white/(--ring-opacity)',
         // Add the correct border radius
-        square ? 'rounded-(--avatar-radius) *:rounded-(--avatar-radius)' : 'rounded-full *:rounded-full'
+        square ? 'rounded-(--avatar-radius) *:rounded-(--avatar-radius)' : 'rounded-full *:rounded-full',
+        Boolean(center) ? 'relative overflow-hidden' : ''
       )}
     >
       {initials && (
@@ -45,7 +48,12 @@ export function Avatar({
           </text>
         </svg>
       )}
-      {src && <img className="size-full" src={src} alt={alt} />}
+      {src &&
+        (center ? (
+          <span className={`bg-cover bg-center`} style={{ backgroundImage: `url(${src})` }} />
+        ) : (
+          <img className="size-full" src={src} alt={alt} />
+        ))}
     </span>
   )
 }

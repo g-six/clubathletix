@@ -9,7 +9,6 @@ import { CreateOrganizationForm } from '@/components/organizations/organization.
 import { TeamDialog } from '@/components/organizations/team.dialog'
 import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
-import { getRecentMembers } from '@/data'
 import { formatDateTime } from '@/lib/date-helper'
 import { getOrganization } from '@/models/organization'
 import { Prisma } from '@prisma/client'
@@ -26,7 +25,7 @@ export default async function Home(props: { params: Promise<unknown> }) {
 
   let matches: Prisma.MatchUncheckedCreateInput[] = organization?.matches || []
   let leagues: Prisma.LeagueUncheckedCreateInput[] = organization?.leagues || []
-  let orders = await getRecentMembers()
+  let members = organization?.members || []
 
   return (
     <>
@@ -192,7 +191,7 @@ export default async function Home(props: { params: Promise<unknown> }) {
         />
         <Card
           href={teams.length > 0 ? `/organizations/${organization_id}/teams` : undefined}
-          title="My teams"
+          title="Members"
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
               {teams.map((team) => (
@@ -234,29 +233,38 @@ export default async function Home(props: { params: Promise<unknown> }) {
         />
       </div>
       <Subheading className="mt-14">Recent registrations</Subheading>
-      <Table className="mt-4 hidden [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
+      <Table className="mt-4 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
         <TableHead>
           <TableRow>
-            <TableHeader>ID</TableHeader>
             <TableHeader>Registration date</TableHeader>
-            <TableHeader>Customer</TableHeader>
-            <TableHeader>Age group</TableHeader>
+
+            <TableHeader>Name</TableHeader>
             <TableHeader className="text-right">Amount</TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id} href={order.url} title={`Member #${order.id}`}>
-              <TableCell>{order.id}</TableCell>
-              <TableCell className="text-zinc-500">{order.date}</TableCell>
-              <TableCell>{order.customer.name}</TableCell>
+          {members.map((record) => (
+            <TableRow
+              key={record.team_member_id}
+              href={`/organizations/${organization.organization_id}/members/${record.team_member_id}`}
+              title={record.user.first_name}
+            >
+              <TableCell className="w-48 text-zinc-500">{formatDateTime(record.user.created_at)}</TableCell>
+
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Avatar src={order.event.thumbUrl} className="size-6" />
-                  <span>{order.event.name}</span>
+                  <Avatar
+                    src={record.user.image ? `/api/files/${record.user.image}` : null}
+                    initials={
+                      record.user.image ? undefined : [record.user.first_name[0], record.user.last_name[0]].join('')
+                    }
+                    className="size-6"
+                    center
+                  />
+                  <span>{record.user.first_name}</span>
                 </div>
               </TableCell>
-              <TableCell className="text-right">US{order.amount.usd}</TableCell>
+              <TableCell className="text-right capitalize">{record.role.toLowerCase()}</TableCell>
             </TableRow>
           ))}
         </TableBody>

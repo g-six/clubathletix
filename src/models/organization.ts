@@ -84,7 +84,9 @@ export async function getOrganization(organization_id: string, options?: {
                         first_name: true,
                         last_name: true,
                         email: true,
-                        phone: true
+                        phone: true,
+                        image: true,
+                        created_at: true,
                     }
                 }
             }
