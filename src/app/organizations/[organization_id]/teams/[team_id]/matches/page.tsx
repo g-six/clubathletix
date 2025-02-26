@@ -20,7 +20,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
 export default async function Member({ params }: { params: { id: string } }) {
   let order = await getMember('3000')
-  console.log({ order })
   if (!order) {
     notFound()
   }

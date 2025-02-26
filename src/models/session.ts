@@ -2,14 +2,18 @@ import { prisma } from '@/prisma'
 import { Prisma } from '@prisma/client'
 import { cookies } from 'next/headers'
 import { getOrganizationsByUserId } from './organization'
+import { redirect } from 'next/navigation'
 
 const hoursBeforeExpiry = 24 * 14
-
-export async function createSession(user_id: string, initialise?: boolean): Promise<CreateSession> {
+type SessionWithUser = Prisma.SessionSelect & {
+    user?: Prisma.UserSelect
+}
+export async function createSession(user_id: string, initialise?: boolean): Promise<SessionWithUser | undefined> {
     const cookieStore = await cookies()
     let session_id = cookieStore.get('session_id')?.value || ''
     let session_token = crypto.randomUUID()
-    let session: CreateSession = undefined
+    let session: SessionWithUser | undefined = undefined
+    let user: Prisma.UserSelect | undefined = undefined
     if (session_id) {
         session = await prisma.session.findFirst({
             where: {
@@ -24,10 +28,15 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
                         email: true,
                         phone: true,
                         timezone: true,
+                        role: true,
                     }
                 }
             }
-        })
+        }) as unknown as SessionWithUser
+
+        if (session) {
+            user = session.user
+        }
     }
 
     await prisma.session.deleteMany({
@@ -45,7 +54,7 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
 
     const expires = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)
 
-    session = await prisma.session.create({
+    const newSession = await prisma.session.create({
         data: {
             user_id,
             expires,
@@ -53,45 +62,10 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
         }
     })
 
-    const user = await prisma.user.findUnique({
-        where: {
-            user_id
-        }
-    })
+    session = newSession as unknown as SessionWithUser
 
-    Object.entries(user)
-        .filter(([_, value]) =>
-            typeof value === 'string' && !_.startsWith('hashed')
-        )
-        .forEach(([name, v]) => {
-            const value = v as string
-            const cookie = {
-                name: name === 'session_id' ? 'session_id' : name,
-                value,
-                expires: session.expires,
-                path: '/',
-            }
-            cookieStore.set(cookie)
-        })
-    Object.entries(session)
-        .filter(([_, value]) =>
-            typeof value === 'string' && _ !== 'user_id'
-        )
-        .forEach(([name, v]) => {
-            const value = v as string
-            if (name === 'session_id') {
-                session_id = value
-
-            }
-            const cookie = {
-                name: name === 'session_id' ? 'session_id' : name,
-                value,
-                expires: session.expires,
-                path: '/',
-            }
-            cookieStore.set(cookie)
-        })
-
+    user && saveUserSession(user)
+    saveSession(session)
     if (!cookieStore.has('organization_id') && session_id) {
         const organizations = await getOrganizationsByUserId(session_id)
         if (organizations.length > 1) {
@@ -103,7 +77,46 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
             cookieStore.set(cookie)
         }
     }
-    return session
+    return {
+        ...session,
+        user,
+    }
 }
 
-export type CreateSession = Prisma.Args<typeof prisma.Session, 'create'>['data']
+export async function saveUserSession(user: Prisma.UserSelect, expires: Date = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)) {
+    const cookieStore = await cookies()
+    Object.entries(user)
+        .filter(([_, value]) =>
+            typeof value === 'string' && !_.startsWith('hashed')
+        )
+        .forEach(([name, v]) => {
+            const value = v as string
+
+            const cookie = {
+                name,
+                value,
+                expires,
+                path: '/',
+            }
+            cookieStore.set(cookie)
+        })
+}
+export async function saveSession(session: Prisma.SessionSelect, expires: Date = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)) {
+    const cookieStore = await cookies()
+    Object.entries(session)
+        .filter(([_, value]) =>
+            typeof value === 'string' && _ !== 'user_id'
+        )
+        .forEach(([name, v]) => {
+            const value = v as string
+
+            const cookie = {
+                name: name === 'session_id' ? 'session_id' : name,
+                value,
+                expires,
+                path: '/',
+            }
+            cookieStore.set(cookie)
+        })
+}
+export type CreateSession = Prisma.Args<typeof prisma.session, 'create'>['data']

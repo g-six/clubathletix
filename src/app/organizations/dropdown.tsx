@@ -20,6 +20,9 @@ export function OrganizationDropdown({
     organization_id: string
     name: string
     role: string
+    organization: {
+      logo: string
+    }
   }[]
 }) {
   const params = useParams()
@@ -47,7 +50,7 @@ export function OrganizationDropdown({
   return (
     <Dropdown>
       <DropdownButton as={SidebarItem}>
-        <Avatar src="/teams/catalyst.svg" />
+        <Avatar src={organization?.organization.logo || `/teams/catalyst.svg`} />
         <SidebarLabel>{organization?.name || 'ClubAthletix'}</SidebarLabel>
         <ChevronDownIcon />
       </DropdownButton>
@@ -59,7 +62,7 @@ export function OrganizationDropdown({
         {Boolean(data.length) && <DropdownDivider />}
         {data.map((org) => (
           <DropdownItem onClick={() => setOrganization(org)} key={org.organization_id}>
-            <Avatar slot="icon" src="/teams/catalyst.svg" />
+            <Avatar slot="icon" src={organization?.organization.logo || `/teams/catalyst.svg`} />
             <DropdownLabel>{org.name}</DropdownLabel>
           </DropdownItem>
         ))}

@@ -104,26 +104,25 @@ model Authenticator {
 model Organization {
   organization_id    String             @id @default(cuid())
   organization_type  String             @default("academy")
+  domain             String?            @unique 
   name               String
-  contact_first_name String
-  contact_last_name  String
+  short_name         String
   email              String
   phone              String
-  domain             String
+  contact_first_name String
+  contact_last_name  String
+  created_by         String
   activated_at       DateTime?
   created_at         DateTime           @default(now())
   updated_at         DateTime           @updatedAt
   deleted_at         DateTime?
-  created_by         String
   updated_by         String?
   logo               String?
-  League             League?
-  Player             Player[]
+  League             League[]
   Team               Team[]
   UserOrganization   UserOrganization[]
 
   @@index([name, organization_type])
-  @@index([domain])
   @@map("organizations")
 }
 
@@ -131,15 +130,15 @@ model League {
   league_id       String       @id @default(cuid())
   organization_id String
   name            String
-  start_date      DateTime     @db.Date
-  end_date        DateTime     @db.Date
+  start_date      String     
+  end_date        String     
   description     String?
   created_at      DateTime     @default(now())
   created_by      String
   updated_at      DateTime     @updatedAt
   updated_by      String?
   deleted_at      DateTime?
-  organization    Organization @relation(fields: [league_id], references: [organization_id])
+  organization    Organization @relation(fields: [organization_id], references: [organization_id])
   matches         Match[]
   teams           Team[]
 
@@ -167,7 +166,6 @@ model UserOrganization {
 model Player {
   player_id       String         @id @default(cuid())
   user_id         String?
-  organization_id String
   first_name      String
   last_name       String
   photo           String?
@@ -182,12 +180,10 @@ model Player {
   match_events    MatchEvent[]
   matches         MatchPlayer[]
   parents         PlayerParent[]
-  organization    Organization   @relation(fields: [organization_id], references: [organization_id])
   user            User?          @relation(fields: [user_id], references: [user_id])
   teams           TeamPlayer[]
 
-  @@index([last_name, first_name, organization_id])
-  @@index([organization_id], map: "players_organization_id_fkey")
+  @@index([last_name, first_name])
   @@index([user_id], map: "players_user_id_fkey")
   @@map("players")
 }

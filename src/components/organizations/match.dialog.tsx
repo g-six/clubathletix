@@ -247,7 +247,7 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
               >
                 {isLoading ? (
                   <>
-                    <img src="/loaders/default.gif" className="size-4 rounded-full bg-white" />
+                    <img title="loading" src="/loaders/default.gif" className="size-4 rounded-full bg-white" />
                     <span>Creating...</span>
                   </>
                 ) : (

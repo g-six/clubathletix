@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma'
 import bcrypt from 'bcryptjs'
-import { createSession } from '@/models/session'
+import { createSession, saveUserSession } from '@/models/session'
 import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
             last_name,
             image,
             email,
+            role,
         } = session_user.user as {
             [k: string]: string
         }
@@ -72,9 +73,11 @@ export async function POST(request: Request) {
             last_name,
             image,
             email,
+            role,
         } as {
             [k: string]: string
         }
+        saveUserSession(user)
         session_user.session = await createSession(user_id, true)
 
         return Response.json({

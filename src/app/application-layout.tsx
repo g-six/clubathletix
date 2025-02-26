@@ -27,6 +27,7 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/20/solid'
 import { cookies } from 'next/headers'
+import Login from './login/page'
 import { OrganizationDropdown } from './organizations/dropdown'
 
 export async function ApplicationLayout({
@@ -37,6 +38,13 @@ export async function ApplicationLayout({
   children: React.ReactNode
 }) {
   const cookieStore = await cookies()
+
+  if (!cookieStore.get('session_id')?.value)
+    return (
+      <section className="flex h-screen flex-col items-center justify-center px-8">
+        <Login />
+      </section>
+    )
   let organization_id = cookieStore.get('organization_id')?.value || ''
 
   const organizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
@@ -62,7 +70,7 @@ export async function ApplicationLayout({
         </Navbar>
       }
       sidebar={
-        !cookieStore.get('email')?.value ? null : (
+        !cookieStore.get('session_id')?.value ? null : (
           <Sidebar>
             <SidebarHeader>
               <OrganizationDropdown data={organizations} />
@@ -74,6 +82,12 @@ export async function ApplicationLayout({
                   <HomeIcon />
                   <SidebarLabel>Home</SidebarLabel>
                 </SidebarItem>
+                {cookieStore.get('role')?.value === 'root' && (
+                  <SidebarItem href={`${basepath}/leagues`}>
+                    <CalendarIcon />
+                    <SidebarLabel>Leagues</SidebarLabel>
+                  </SidebarItem>
+                )}
                 <SidebarItem href={`${basepath}/teams`}>
                   <UserGroupIcon />
                   <SidebarLabel>Teams</SidebarLabel>

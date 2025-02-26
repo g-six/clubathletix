@@ -21,7 +21,6 @@ export function TeamDropdown({
     team_id: string
     organization_id: string
     name: string
-    role: string
     short_name?: string
   }[]
   selected?: string
@@ -60,6 +59,14 @@ export function TeamDropdown({
         <DropdownItem href="#">
           <PlusIcon />
           <DropdownLabel>New team&hellip;</DropdownLabel>
+        </DropdownItem>
+        <DropdownItem href="#">
+          <PlusIcon />
+          <DropdownLabel>Add player&hellip;</DropdownLabel>
+        </DropdownItem>
+        <DropdownItem href="#">
+          <PlusIcon />
+          <DropdownLabel>Add coach&hellip;</DropdownLabel>
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

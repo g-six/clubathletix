@@ -1,5 +1,7 @@
+import { getPresignedUrlWithClient } from '@/models/file'
 import { prisma } from '@/prisma'
 import { Prisma } from '@prisma/client'
+import { cookies } from 'next/headers'
 
 export async function getOrganizationsByUserId(session_id: string) {
     if (!session_id) return []
@@ -15,9 +17,7 @@ export async function getOrganizationsByUserId(session_id: string) {
     const userOrganizations: {
         organization_id: string
         role: string
-        organization: {
-            name: string
-        }
+        organization: unknown
     }[] = await prisma.userOrganization.findMany({
         where: {
             user_id: session?.user?.user_id
@@ -27,10 +27,29 @@ export async function getOrganizationsByUserId(session_id: string) {
         }
     })
 
-    return userOrganizations.map(uo => ({
-        organization_id: uo.organization_id,
-        name: uo.organization.name,
-        role: uo.role,
+    const logos: Promise<string>[] = []
+
+    const results = userOrganizations.map(uo => {
+        const organization = uo.organization as unknown as Prisma.OrganizationCreateInput
+        logos.push(organization.logo ? getPresignedUrlWithClient(organization.logo) : Promise.resolve(''))
+
+        return {
+            organization_id: uo.organization_id,
+            name: organization.name,
+            role: uo.role,
+            organization: {
+                name: organization.name,
+                logo: organization.logo
+            }
+        }
+    })
+
+    return (await Promise.all(logos)).map((logo, idx) => ({
+        ...results[idx],
+        organization: {
+            ...results[idx].organization,
+            logo
+        }
     }))
 }
 
@@ -44,7 +63,7 @@ export async function getOrganization(organization_id: string, options?: {
         skip?: number
     }
 }) {
-    const [organization, teams, members, matches, players] = await Promise.all([
+    const [organization, teams, members, matches, leagues, players] = await Promise.all([
         prisma.organization.findUnique({
             where: {
                 organization_id
@@ -79,9 +98,14 @@ export async function getOrganization(organization_id: string, options?: {
             }, {
                 organization_id: 'asc'
             }],
-            include: {
-                team: true,
-            }
+        }),
+        prisma.league.findMany({
+            where: {
+                organization_id
+            },
+            orderBy: [{
+                created_at: 'desc'
+            }]
         }),
         options?.players ? prisma.teamPlayer.findMany({
             where: {
@@ -97,7 +121,7 @@ export async function getOrganization(organization_id: string, options?: {
     return {
         ...organization,
         teams,
-        members: members.map((m: TeamMember & { user: User }) => ({
+        members: members.map(m => ({
             team_member_id: m.team_member_id,
             user_id: m.user_id,
             team_id: m.team_id,
@@ -105,10 +129,38 @@ export async function getOrganization(organization_id: string, options?: {
             user: m.user,
         })),
         matches,
-        players
+        players,
+        leagues,
     }
 }
 
+export async function createOrganization(payload: Prisma.OrganizationCreateInput) {
+    let { domain, ...input } = payload
+    const data = Prisma.validator<Prisma.OrganizationCreateInput>()({
+        domain: domain || undefined,
+        ...input
+    })
+
+    const organization = await prisma.organization.create({
+        data
+    })
+    if (organization.organization_id) {
+        const cookieList = await cookies()
+        cookieList.set('organization_id', organization.organization_id)
+
+        await prisma.userOrganization.create({
+            data: {
+                user_id: data.created_by,
+                role: 'owner',
+                organization_id: organization.organization_id,
+                created_by: data.created_by,
+            }
+        })
+    }
+    return organization
+}
+
+export type CreateOrganization = Prisma.Args<typeof prisma.organization, 'create'>['data']
 export type Organization = Prisma.Args<typeof prisma.organization, 'findUnique'>['data']
 export type Team = Prisma.Args<typeof prisma.team, 'findUnique'>['data']
 export type TeamMember = Prisma.Args<typeof prisma.teamMember, 'findUnique'>['data']

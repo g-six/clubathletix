@@ -1,4 +1,5 @@
 'use client'
+
 import { Alert } from '@/components/alert'
 import { Button } from '@/components/button'
 import { Checkbox, CheckboxField } from '@/components/checkbox'
@@ -9,6 +10,7 @@ import { Input } from '@/components/input'
 import { Text } from '@/components/text'
 import Logo from '@/images/logos/mustang.png'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { FormEvent, useState } from 'react'
 // import { Address } from './address'
 function isValidEmail(email: string) {
@@ -18,10 +20,12 @@ function isValidEmail(email: string) {
 }
 
 export default function Login() {
+  const pathname = usePathname()
   const [isLoading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
 
+  if (pathname === '/') location.href = '/login'
   return (
     <form
       method="post"

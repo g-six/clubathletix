@@ -1,77 +1,38 @@
 'use client'
 
 import { Button } from '@/components/button'
-import { Checkbox, CheckboxField } from '@/components/checkbox'
 import { Dialog, DialogActions, DialogBody, DialogDescription, DialogTitle } from '@/components/dialog'
 import { Field, FieldGroup, Label } from '@/components/fieldset'
 import { Input } from '@/components/input'
-import { Select } from '@/components/select'
-import { Switch } from '@/components/switch'
-import { getAvailableLeaguesForOrganization } from '@/services/league.service'
-import { createMatch } from '@/services/match.service'
-import { useCallback, useEffect, useState } from 'react'
+import { createTeam } from '@/services/team.service'
+import { Prisma } from '@prisma/client'
+import { useCallback, useState } from 'react'
+import { Select } from '../select'
 
-export function TeamDialog(props: { 'organization-id': string } & React.ComponentPropsWithoutRef<typeof Button>) {
+export function TeamDialog(
+  props: { 'organization-id': string; leagues: Prisma.LeagueUncheckedCreateInput[] } & React.ComponentPropsWithoutRef<
+    typeof Button
+  >
+) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
-  let [isInitiating, setIsInitiating] = useState(true)
+
   const [payload, setPayload] = useState<{
     [k: string]: string
   }>({
-    year: new Date().getFullYear().toString(),
     organization_id: props['organization-id'],
-    home_or_away: 'home',
+    league_id: props.leagues?.[0]?.league_id || '',
+    division: '2',
+    age_group: 'U13',
   })
-
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ]
-  const currentDate = new Date()
-  const nextWeek = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-  const nextTwoWeeks = new Date(currentDate.getTime() + 14 * 24 * 60 * 60 * 1000)
-
-  const availableMonths = [months[currentDate.getMonth()]]
-  if (!availableMonths.includes(months[nextWeek.getMonth()])) {
-    availableMonths.push(months[nextWeek.getMonth()], months[nextTwoWeeks.getMonth()])
-  } else if (!availableMonths.includes(months[nextTwoWeeks.getMonth()])) {
-    availableMonths.push(months[nextTwoWeeks.getMonth()])
-  }
 
   const handleSubmit = useCallback(async () => {
     toggleLoader(true)
 
-    const match = await createMatch(payload)
-    location.reload()
+    const team = await createTeam(payload)
+    // location.reload()
   }, [payload])
 
-  const getLeagueOptions = useCallback(async (team_id: string) => {
-    const leagues = await getAvailableLeaguesForOrganization(props['organization-id'])
-    setIsInitiating(false)
-    return leagues
-  }, [])
-
-  useEffect(() => {
-    if (payload.organization_id && isOpen) {
-      getLeagueOptions(payload.team_id).then((teamLeague) => {
-        setPayload((prev) => ({
-          ...prev,
-          league_id: teamLeague.league_id,
-          organization_id: teamLeague.organization_id,
-        }))
-      })
-    }
-  }, [getLeagueOptions, isOpen])
   return (
     <>
       <Button type="button" onClick={() => setIsOpen(true)} {...props} />
@@ -79,183 +40,101 @@ export function TeamDialog(props: { 'organization-id': string } & React.Componen
         open={isOpen}
         onClose={() => {
           toggleLoader(false)
-          setIsInitiating(true)
+
           setIsOpen(false)
         }}
       >
         <DialogTitle>Create a team</DialogTitle>
 
-        {isInitiating && isOpen ? (
-          <>
-            <div className="flex items-center gap-2">
-              <img src="/loaders/default.gif" className="mt-1 size-4 rounded-full bg-white" />{' '}
-              <DialogDescription>Loading league information...</DialogDescription>
-            </div>
-          </>
-        ) : (
-          <>
-            <DialogDescription>Enter the details of the match you are creating</DialogDescription>
-            <DialogBody>
-              <FieldGroup>
-                <Field>
-                  <Label>Opponent</Label>
-                  <Input
-                    name="opponent"
-                    disabled={isLoading}
-                    placeholder="Enter team name..."
-                    invalid={!payload.opponent}
-                    onChange={(evt) => setPayload({ ...payload, opponent: evt.currentTarget.value })}
-                    autoFocus
-                  />
-                </Field>
-                <Field>
-                  <Label>Venue</Label>
-                  <Input
-                    name="location"
-                    required
-                    disabled={isLoading}
-                    invalid={!payload.location}
-                    placeholder="Enter match venue..."
-                    onChange={(evt) => setPayload({ ...payload, location: evt.currentTarget.value })}
-                  />
+        <DialogDescription>Enter the details of the team you are creating</DialogDescription>
+        <DialogBody>
+          <FieldGroup>
+            <Field>
+              <Label>League</Label>
 
-                  <div className="mt-2 flex items-center justify-end gap-2">
-                    <div
-                      className={`text-xs capitalize ${payload.home_or_away === 'home' ? 'text-lime-500' : 'text-pink'}`}
-                    >
-                      {payload.home_or_away || 'Home'}
-                    </div>
-
-                    <Switch
-                      name="home_or_away"
-                      defaultChecked
-                      color="lime"
-                      onChange={(isHome) => setPayload({ ...payload, home_or_away: isHome ? 'home' : 'away' })}
-                    />
-                  </div>
-                </Field>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Field className="w-48">
-                    <Label>Month</Label>
-                    <Select
-                      name="month"
-                      defaultValue=""
-                      disabled={isLoading}
-                      onChange={(evt) => {
-                        let year = currentDate.getFullYear()
-                        if (
-                          nextWeek.getFullYear() > currentDate.getFullYear() &&
-                          Number(evt.currentTarget.value) !== currentDate.getMonth()
-                        ) {
-                          year++
-                        }
-                        setPayload({
-                          ...payload,
-                          year: year.toString(),
-                          month: `${Number(evt.currentTarget.value) > 8 ? '' : '0'}${Number(evt.currentTarget.value) + 1}`,
-                        })
-                      }}
-                    >
-                      <option value="" disabled>
-                        Select month&hellip;
-                      </option>
-                      {availableMonths.map((month, index) => (
-                        <option value={index + 1} key={month}>
-                          {month}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field className="w-20">
-                    <Label>Day</Label>
-                    <Input
-                      disabled={isLoading}
-                      name="day"
-                      placeholder="Day"
-                      onChange={(evt) =>
-                        setPayload({
-                          ...payload,
-                          day: `${Number(evt.currentTarget.value) > 9 ? '' : '0'}${Number(evt.currentTarget.value)}`,
-                        })
-                      }
-                    />
-                  </Field>
-                  <div className="flex flex-1 justify-end gap-1">
-                    <Field className="w-16">
-                      <Label>Hour</Label>
-                      <Input
-                        disabled={isLoading}
-                        name="hour"
-                        type="number"
-                        max={23}
-                        invalid={Boolean(payload.hour && Number(payload.hour) > 23)}
-                        placeholder="17"
-                        onChange={(evt) =>
-                          setPayload({
-                            ...payload,
-                            hour: `${Number(evt.currentTarget.value) > 9 ? '' : '0'}${Number(evt.currentTarget.value)}`,
-                          })
-                        }
-                      />
-                    </Field>
-                    <Field className="w-16">
-                      <Label>Minute</Label>
-                      <Input
-                        disabled={isLoading}
-                        name="minute"
-                        type="number"
-                        placeholder="30"
-                        max={59}
-                        invalid={Boolean(payload.minute && Number(payload.minute) > 59)}
-                        onChange={(evt) =>
-                          setPayload({
-                            ...payload,
-                            minute: `${Number(evt.currentTarget.value) > 9 ? '' : '0'}${Number(evt.currentTarget.value)}`,
-                          })
-                        }
-                      />
-                    </Field>
-                  </div>
-                </div>
-                <CheckboxField disabled={isLoading}>
-                  <Checkbox name="notify" defaultChecked disabled={isLoading} />
-                  <Label>Add all players of the team to this match</Label>
-                </CheckboxField>
-              </FieldGroup>
-            </DialogBody>
-            <div className="mt-4 w-full text-zinc-400">
-              <span className="text-xs/4">A notification will be sent to each player / parent / guardian.</span>
-            </div>
-            <DialogActions>
-              <Button
-                plain
-                onClick={() => {
-                  setIsOpen(false)
-                  toggleLoader(false)
-                  setIsInitiating(true)
-                }}
+              <Select
+                name="league_id"
+                onChange={(evt) => setPayload({ ...payload, [evt.currentTarget.name]: evt.currentTarget.value })}
+              >
+                {props.leagues.map((league) => (
+                  <option key={league.league_id} value={league.league_id}>
+                    {league.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </FieldGroup>
+          <FieldGroup className="mt-6 grid gap-x-3 sm:grid-cols-5">
+            <Field className="col-span-3">
+              <Label>Team name</Label>
+              <Input
+                name="name"
                 disabled={isLoading}
+                placeholder="Enter team name..."
+                onChange={(evt) => setPayload({ ...payload, [evt.currentTarget.name]: evt.currentTarget.value })}
+                autoFocus
+              />
+            </Field>
+            <Field>
+              <Label>Age group</Label>
+
+              <Select
+                name="age_group"
+                defaultValue={payload.age_group}
+                onChange={(evt) => setPayload({ ...payload, [evt.currentTarget.name]: evt.currentTarget.value })}
               >
-                Cancel
-              </Button>
-              <Button
-                className="flex items-center gap-2"
-                onClick={() => {
-                  handleSubmit()
-                }}
+                {Array.from({ length: 15 }, (_, i) => i + 7).map((x) => (
+                  <option value={`U${x}`} key={`U${x}`}>{`U${x}`}</option>
+                ))}
+                <option value="adult">Adult</option>
+              </Select>
+            </Field>
+            <Field>
+              <Label>Division</Label>
+
+              <Select
+                name="division"
+                defaultValue={payload.division}
+                onChange={(evt) => setPayload({ ...payload, [evt.currentTarget.name]: evt.currentTarget.value })}
               >
-                {isLoading ? (
-                  <>
-                    <img src="/loaders/default.gif" className="size-4 rounded-full bg-white" />
-                    <span>Creating...</span>
-                  </>
-                ) : (
-                  'Create match'
-                )}
-              </Button>
-            </DialogActions>
-          </>
-        )}
+                <option value="PL">PL</option>
+                <option value="1">1</option>
+                <option value="1A">1A</option>
+                <option value="1B">1B</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </Select>
+            </Field>
+          </FieldGroup>
+        </DialogBody>
+
+        <DialogActions>
+          <Button
+            plain
+            onClick={() => {
+              setIsOpen(false)
+              toggleLoader(false)
+            }}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="flex items-center gap-2"
+            onClick={() => {
+              handleSubmit()
+            }}
+          >
+            {isLoading ? (
+              <>
+                <img src="/loaders/default.gif" className="size-4 rounded-full bg-white" />
+                <span>Creating...</span>
+              </>
+            ) : (
+              'Create team'
+            )}
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   )

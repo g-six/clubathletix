@@ -15,16 +15,6 @@ export async function createMatch(payload: unknown) {
         [k: string]: string
     }
     try {
-        console.log({
-            organization_id,
-            league_id,
-            team_id,
-            opponent,
-            match_date,
-            home_or_away,
-            created_by,
-            location,
-        })
         return await prisma.match.create({
             data: {
                 organization_id,

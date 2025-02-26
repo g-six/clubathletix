@@ -12,7 +12,7 @@ export default async function Home() {
   const cookieStore = await cookies()
   let ogranizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
   let orders = await getRecentMembers()
-  if (!ogranizations.length) return <CreateOrganizationForm>Start managing your organization</CreateOrganizationForm>
+  if (!ogranizations.length) return <CreateOrganizationForm />
   return (
     <>
       <Heading>

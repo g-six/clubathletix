@@ -48,6 +48,14 @@ const styles = {
     // Icon
     '[--btn-icon:var(--color-zinc-500)] data-active:[--btn-icon:var(--color-zinc-700)] data-hover:[--btn-icon:var(--color-zinc-700)] dark:data-active:[--btn-icon:var(--color-zinc-400)] dark:data-hover:[--btn-icon:var(--color-zinc-400)]',
   ],
+  skeleton: [
+    // Base
+    '!text-xs !p-0 border-transparent text-zinc-950 data-active:underline data-hover:underline',
+    // Dark mode
+    'dark:text-white dark:data-active:bg-none dark:data-hover:underline',
+    // Icon
+    '[--btn-icon:var(--color-zinc-500)] data-active:[--btn-icon:var(--color-zinc-700)] data-hover:[--btn-icon:var(--color-zinc-700)] dark:[--btn-icon:var(--color-zinc-500)] dark:data-active:[--btn-icon:var(--color-zinc-400)] dark:data-hover:[--btn-icon:var(--color-zinc-400)]',
+  ],
   plain: [
     // Base
     'border-transparent text-zinc-950 data-active:bg-zinc-950/5 data-hover:bg-zinc-950/5',
@@ -159,22 +167,29 @@ const styles = {
 }
 
 type ButtonProps = (
-  | { color?: keyof typeof styles.colors; outline?: never; plain?: never }
-  | { color?: never; outline: true; plain?: never }
-  | { color?: never; outline?: never; plain: true }
+  | { color?: keyof typeof styles.colors; outline?: never; plain?: never; skeleton?: never }
+  | { color?: never; outline: true; plain?: never; skeleton?: never }
+  | { color?: never; outline?: never; plain: true; skeleton?: never }
+  | { color?: never; outline?: never; plain?: never; skeleton: true }
 ) & { className?: string; children: React.ReactNode } & (
     | Omit<Headless.ButtonProps, 'as' | 'className'>
     | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>
   )
 
 export const Button = forwardRef(function Button(
-  { color, outline, plain, className, children, ...props }: ButtonProps,
+  { color, outline, plain, skeleton, className, children, ...props }: ButtonProps,
   ref: React.ForwardedRef<HTMLElement>
 ) {
   let classes = clsx(
     className,
     styles.base,
-    outline ? styles.outline : plain ? styles.plain : clsx(styles.solid, styles.colors[color ?? 'dark/zinc'])
+    skeleton
+      ? styles.skeleton
+      : outline
+        ? styles.outline
+        : plain
+          ? styles.plain
+          : clsx(styles.solid, styles.colors[color ?? 'dark/zinc'])
   )
 
   return 'href' in props ? (

@@ -106,11 +106,6 @@ export function EventDialog(
     saves: [],
   })
 
-  // if (props.match.goals_for !== undefined && props.event === 'goal') {
-  //   console.log(props.match.events)
-  //   if (props.side === props.match.home_or_away) {
-  //   }
-  // }
   const [payload, setPayload] = useState<{
     [k: string]: string | undefined
   }>({
