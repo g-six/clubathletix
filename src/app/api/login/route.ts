@@ -2,6 +2,7 @@ import { prisma } from '@/prisma'
 import bcrypt from 'bcryptjs'
 import { createSession, saveUserSession } from '@/models/session'
 import { cookies } from 'next/headers'
+import { User } from '@prisma/client'
 
 export async function POST(request: Request) {
     const cookieList = await cookies()
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
 
     }
     const hashed_password = bcrypt.hashSync(payload.password, process.env.AUTH_SALT)
+    const password_reset_token = bcrypt.hashSync(payload.password, process.env.AUTH_SALT)
 
     try {
         const user = await prisma.user.findUnique({
@@ -21,10 +23,19 @@ export async function POST(request: Request) {
                 email: payload.email,
             }
         })
-        if (hashed_password === user.hashed_password) {
-            session_user.user = {
-                ...user,
-                hashed_password: undefined,
+        if (user) {
+            if (hashed_password === user.hashed_password) {
+                session_user.user = {
+                    ...user,
+                    password_reset_token: undefined,
+                    hashed_password: undefined,
+                }
+            } else if (password_reset_token === user.password_reset_token) {
+                session_user.user = {
+                    ...user,
+                    password_reset_token: undefined,
+                    hashed_password: undefined,
+                }
             }
         }
     } catch (error) {
@@ -77,7 +88,7 @@ export async function POST(request: Request) {
         } as {
             [k: string]: string
         }
-        saveUserSession(user)
+        saveUserSession(user as unknown as User)
         session_user.session = await createSession(user_id, true)
 
         return Response.json({

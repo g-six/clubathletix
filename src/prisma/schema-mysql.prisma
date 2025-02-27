@@ -20,7 +20,7 @@ model User {
   email_verified_at               DateTime?
   is_account_activated            Boolean?           @default(false)
   is_account_locked               Boolean?           @default(false)
-  password_rest_token             String?
+  password_reset_token            String?
   registration_verification_token String?
   image                           String?
   activated_at                    DateTime?

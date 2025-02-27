@@ -74,147 +74,154 @@ export default async function Home(props: { params: Promise<unknown> }) {
             </div>
           }
         />
-        <Card
-          href={leagues.length > 0 ? `/organizations/${organization_id}/leagues` : undefined}
-          title="Leagues"
-          CreateDialog={
-            <CreateLeagueDialog skeleton organization-id={organization_id} className="!text-zinc-500">
-              Create another league
-            </CreateLeagueDialog>
-          }
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              {leagues.map((record) => (
-                <Link
-                  href={`/organizations/${organization_id}/teams/${record.league_id}`}
-                  className="group flex gap-1"
-                  key={record.league_id}
-                >
-                  <span className="flex-1 font-bold group-hover:text-lime-500">{record.name}</span>
-                </Link>
-              ))}
-              {leagues.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-2 text-center">
-                  <span>No league yet</span>
+        {cookieStore.get('role')?.value === 'owner' && (
+          <Card
+            href={leagues.length > 0 ? `/organizations/${organization_id}/leagues` : undefined}
+            title="Leagues"
+            CreateDialog={
+              <CreateLeagueDialog skeleton organization-id={organization_id} className="!text-zinc-500">
+                Create another league
+              </CreateLeagueDialog>
+            }
+            contents={
+              <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
+                {leagues.map((record) => (
+                  <Link
+                    href={`/organizations/${organization_id}/teams/${record.league_id}`}
+                    className="group flex gap-1"
+                    key={record.league_id}
+                  >
+                    <span className="flex-1 font-bold group-hover:text-lime-500">{record.name}</span>
+                  </Link>
+                ))}
+                {leagues.length === 0 && (
+                  <div className="flex flex-col items-center justify-center gap-2 text-center">
+                    <span>No league yet</span>
 
-                  <CreateLeagueDialog plain organization-id={organization_id} className="!text-xs/4 underline">
-                    + Create one
-                  </CreateLeagueDialog>
-                </div>
-              )}
-            </div>
-          }
-        />
+                    <CreateLeagueDialog plain organization-id={organization_id} className="!text-xs/4 underline">
+                      + Create one
+                    </CreateLeagueDialog>
+                  </div>
+                )}
+              </div>
+            }
+          />
+        )}
 
-        <Card
-          href={teams.length > 0 ? `/organizations/${organization_id}/teams` : undefined}
-          title="Teams"
-          CreateDialog={
-            <TeamDialog skeleton organization-id={organization_id} className="!text-zinc-500" leagues={leagues}>
-              Add another team
-            </TeamDialog>
-          }
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              {teams.map((team) => (
-                <Link
-                  href={`/organizations/${organization_id}/teams/${team.team_id}`}
-                  className="group flex gap-1"
-                  key={team.team_id}
-                >
-                  <span className="flex-1 font-bold group-hover:text-lime-500">{team.name}</span>
-                  <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                    {team.age_group}
-                  </Badge>
-                  {team.division && (
-                    <Badge
-                      color={team.division.includes('1') ? 'lime' : 'zinc'}
-                      text-size="text-xs/5 sm:text-[0.65rem]/3"
-                    >
-                      Div {team.division}
+        {cookieStore.get('role')?.value === 'owner' && (
+          <Card
+            href={teams.length > 0 ? `/organizations/${organization_id}/teams` : undefined}
+            title="Teams"
+            CreateDialog={
+              <TeamDialog skeleton organization-id={organization_id} className="!text-zinc-500" leagues={leagues}>
+                Add another team
+              </TeamDialog>
+            }
+            contents={
+              <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
+                {teams.map((team) => (
+                  <Link
+                    href={`/organizations/${organization_id}/teams/${team.team_id}`}
+                    className="group flex gap-1"
+                    key={team.team_id}
+                  >
+                    <span className="flex-1 font-bold group-hover:text-lime-500">{team.name}</span>
+                    <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                      {team.age_group}
                     </Badge>
+                    {team.division && (
+                      <Badge
+                        color={team.division.includes('1') ? 'lime' : 'zinc'}
+                        text-size="text-xs/5 sm:text-[0.65rem]/3"
+                      >
+                        Div {team.division}
+                      </Badge>
+                    )}
+                  </Link>
+                ))}
+                {teams.length === 0 && (
+                  <div className="flex flex-col items-center justify-center gap-2 text-center">
+                    <span>No teams yet</span>
+
+                    <TeamDialog
+                      plain
+                      organization-id={organization_id}
+                      leagues={leagues}
+                      className="!text-xs/4 underline"
+                    >
+                      + Create one
+                    </TeamDialog>
+                  </div>
+                )}
+
+                {teams.length > 0 && (
+                  <div className="my-1 flex w-full justify-end">
+                    <TeamDialog
+                      skeleton
+                      organization-id={organization_id}
+                      leagues={leagues}
+                      className="!bg-none !text-zinc-400 hover:!text-lime-500"
+                    >
+                      + New team
+                    </TeamDialog>
+                  </div>
+                )}
+              </div>
+            }
+          />
+        )}
+        {cookieStore.get('role')?.value &&
+          ['owner', 'root'].includes(cookieStore.get('role')?.value.toLowerCase() as string) && (
+            <Card
+              title="Organization Members"
+              href={`/organizations/${organization_id}/members`}
+              CreateDialog={
+                <InviteMemberDialog className="!text-zinc-500" skeleton organization-id={organization_id}>
+                  Invite another member
+                </InviteMemberDialog>
+              }
+              contents={
+                <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
+                  {members.map((rec) => (
+                    <Link
+                      href={`/organizations/${organization_id}/members/${rec.team_member_id}`}
+                      className="group flex gap-1"
+                      key={rec.team_member_id}
+                    >
+                      <Avatar
+                        src={rec.user.image ? `/api/files/${rec.user.image}` : null}
+                        initials={rec.user.image ? undefined : [rec.user.first_name[0], rec.user.last_name[0]].join('')}
+                        className="size-4"
+                        center
+                      />
+                      <span>{[rec.user.last_name, rec.user.first_name].filter(Boolean).join(', ')}</span>
+                      <span className="flex-1 font-bold capitalize group-hover:text-lime-500"></span>
+                      <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3 capitalize">
+                        {(teams.find((team) => team.team_id === rec.team_id) || {})?.name?.toLowerCase()}{' '}
+                      </Badge>
+                      <Badge color="zinc" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                        <span className="capitalize">{rec.role.toLowerCase()}</span>
+                      </Badge>
+                    </Link>
+                  ))}
+                  {teams.length === 0 && (
+                    <div className="flex flex-col items-center justify-center gap-2 text-center">
+                      <span>No teams yet</span>
+
+                      <TeamDialog
+                        plain
+                        organization-id={organization_id}
+                        leagues={leagues}
+                        className="!text-xs/4 underline"
+                      >
+                        + Create one
+                      </TeamDialog>
+                    </div>
                   )}
-                </Link>
-              ))}
-              {teams.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-2 text-center">
-                  <span>No teams yet</span>
-
-                  <TeamDialog
-                    plain
-                    organization-id={organization_id}
-                    leagues={leagues}
-                    className="!text-xs/4 underline"
-                  >
-                    + Create one
-                  </TeamDialog>
                 </div>
-              )}
-
-              {teams.length > 0 && (
-                <div className="my-1 flex w-full justify-end">
-                  <TeamDialog
-                    skeleton
-                    organization-id={organization_id}
-                    leagues={leagues}
-                    className="!bg-none !text-zinc-400 hover:!text-lime-500"
-                  >
-                    + New team
-                  </TeamDialog>
-                </div>
-              )}
-            </div>
-          }
-        />
-        <Card
-          title="Organization Members"
-          href={`/organizations/${organization_id}/members`}
-          CreateDialog={
-            <InviteMemberDialog className="!text-zinc-500" skeleton organization-id={organization_id}>
-              Invite another member
-            </InviteMemberDialog>
-          }
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              {members.map((rec) => (
-                <Link
-                  href={`/organizations/${organization_id}/members/${rec.team_member_id}`}
-                  className="group flex gap-1"
-                  key={rec.team_member_id}
-                >
-                  <Avatar
-                    src={rec.user.image ? `/api/files/${rec.user.image}` : null}
-                    initials={rec.user.image ? undefined : [rec.user.first_name[0], rec.user.last_name[0]].join('')}
-                    className="size-4"
-                    center
-                  />
-                  <span>{[rec.user.last_name, rec.user.first_name].filter(Boolean).join(', ')}</span>
-                  <span className="flex-1 font-bold capitalize group-hover:text-lime-500"></span>
-                  <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3 capitalize">
-                    {(teams.find((team) => team.team_id === rec.team_id) || {})?.name?.toLowerCase()}{' '}
-                  </Badge>
-                  <Badge color="zinc" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                    <span className="capitalize">{rec.role.toLowerCase()}</span>
-                  </Badge>
-                </Link>
-              ))}
-              {teams.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-2 text-center">
-                  <span>No teams yet</span>
-
-                  <TeamDialog
-                    plain
-                    organization-id={organization_id}
-                    leagues={leagues}
-                    className="!text-xs/4 underline"
-                  >
-                    + Create one
-                  </TeamDialog>
-                </div>
-              )}
-            </div>
-          }
-        />
+              }
+            />
+          )}
       </div>
       <Subheading className="mt-14">Recent registrations</Subheading>
       <Table className="mt-4 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">

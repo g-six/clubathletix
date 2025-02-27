@@ -31,7 +31,7 @@ export async function getOrganizationsByUserId(session_id: string) {
 
     const results = userOrganizations.map(uo => {
         const organization = uo.organization as unknown as Prisma.OrganizationCreateInput
-        logos.push(organization.logo ? getPresignedUrlWithClient(organization.logo) : Promise.resolve(''))
+        logos.push(organization.logo ? getPresignedUrlWithClient(organization.logo, 'GET') : Promise.resolve(''))
 
         return {
             organization_id: uo.organization_id,

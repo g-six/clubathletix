@@ -81,7 +81,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
             ...input,
             image,
             hashed_password,
-            password_rest_token: hashed_password,
+            password_reset_token: hashed_password,
             phone: phone || '',
             timezone,
         }
@@ -200,8 +200,50 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
     }
 }
 
+export async function resetPassword(email: string) {
+    const user = await prisma.user.findUnique({
+        where: {
+            email,
+        }
+    })
+    if (user) {
+        const uniqueId = randomUUID()
+        const passwd = [
+            user.first_name.length < 3 ? user.first_name : user.first_name.substring(0, user.first_name.length - 2),
+            uniqueId.split('-').slice(1, 4).map(str => str.substring(1, 5)).join(''),
+            user.last_name.substring(user.last_name.length - 3, user.last_name.length),
+        ].join('-')
+
+        const password_reset_token = bcrypt.hashSync(passwd, process.env.AUTH_SALT)
+        await prisma.user.update({
+            where: {
+                email,
+            },
+            data: {
+                password_reset_token,
+            }
+        })
+        return await createEmailNotification({
+            sender: {
+                email: 'rey@clubathletix.com',
+                name: 'Club Athletix',
+            },
+            receiver: {
+                email,
+                name: user.first_name,
+            },
+            TemplateId: 39191621,
+            TemplateModel: {
+                name: user.first_name,
+                passwd,
+                action_url: 'https://clubathletix.com/login',
+                product_name: 'Club Athletix'
+            }
+        })
+    }
+}
+
 export async function createTeam(payload: Prisma.TeamUncheckedCreateInput): Promise<Prisma.TeamUncheckedCreateInput | undefined> {
-    console.log(payload)
     const data = await prisma.team.create({
         data: payload
     })

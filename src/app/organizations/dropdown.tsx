@@ -11,6 +11,7 @@ import {
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
 import { setActiveOrganization } from '@/services/organization.service'
 import { ChevronDownIcon, Cog8ToothIcon, UserGroupIcon } from '@heroicons/react/16/solid'
+import cookieJar from 'js-cookie'
 import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 export function OrganizationDropdown({
@@ -66,11 +67,15 @@ export function OrganizationDropdown({
             <DropdownLabel>{org.name}</DropdownLabel>
           </DropdownItem>
         ))}
-        <DropdownDivider />
-        <DropdownItem href="/organizations/new">
-          <UserGroupIcon />
-          <DropdownLabel>Create organization&hellip;</DropdownLabel>
-        </DropdownItem>
+        {cookieJar.get('role') === 'root' && (
+          <>
+            <DropdownDivider />
+            <DropdownItem href="/organizations/new">
+              <UserGroupIcon />
+              <DropdownLabel>Create organization&hellip;</DropdownLabel>
+            </DropdownItem>
+          </>
+        )}
       </DropdownMenu>
     </Dropdown>
   )

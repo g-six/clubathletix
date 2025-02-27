@@ -108,7 +108,7 @@ export default function Login() {
       <section className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
         <div className="space-y-1">
           <Subheading>Password</Subheading>
-          <Text>Enter password.</Text>
+          <Text>Enter password</Text>
         </div>
         <div className="space-y-2 lg:col-span-2">
           <Input type="password" aria-label="Password" name="password" placeholder="••••••••••••" />
@@ -129,28 +129,21 @@ export default function Login() {
             onClick={() => {
               setLoading(true)
 
-              // const payload = {
-              //   email,
-              // }
-              // fetch('/api/reset-password', {
-              //   headers: {
-              //     contentType: 'application/json',
-              //   },
-              //   body: JSON.stringify(payload),
-              //   method: 'POST',
-              // })
-              //   .then((res) => {
-              //     res.json().then((data) => {
-              //       if (data.id) {
-              //         location.href = '/dashboard'
-              //       } else {
-              //         setError('Invalid email or password')
-              //       }
-              //     })
-              //   })
-              //   .finally(() => {
-              //     setLoading(false)
-              //   })
+              fetch('/api/reset-password', {
+                headers: {
+                  contentType: 'application/json',
+                },
+                body: JSON.stringify({ email }),
+                method: 'POST',
+              })
+                .then((res) => {
+                  res.json().then((data) => {
+                    console.log(data)
+                  })
+                })
+                .finally(() => {
+                  setLoading(false)
+                })
             }}
           >
             Click here to request a password reset email

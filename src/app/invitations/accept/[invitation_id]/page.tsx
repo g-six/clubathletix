@@ -17,8 +17,8 @@ export default async function InvitesPage(props: {
 
   if (!user) {
     return <div>Invitation not found</div>
-  } else if (user.password_rest_token) {
-    if (user.password_rest_token !== user.hashed_password) return <div>Invitation is not valid</div>
+  } else if (user.password_reset_token) {
+    if (user.password_reset_token !== user.hashed_password) return <div>Invitation is not valid</div>
   } else {
     return <div>Invitation is not valid</div>
   }
