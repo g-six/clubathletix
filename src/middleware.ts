@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
 
     if (path.startsWith('/logout') && token) {
         request.cookies.clear()
-        // return NextResponse.redirect(new URL('/login', request.url))
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
     if (!token && !session) {

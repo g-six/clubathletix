@@ -10,6 +10,7 @@ import { createEmailNotification } from './notifications'
 export async function inviteUser(payload: User & { imageUrl?: string; organization_id: string; team_id?: string; team_name?: string; player_id?: string; role: string }) {
     const cookieJar = await cookies()
     const created_by = cookieJar.get('user_id')?.value
+    let passwd: string | undefined = undefined
     if (!created_by) {
         console.error('Unable to invite user because user_id cookie is missing')
         return
@@ -19,6 +20,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         console.error('Unable to invite user because session does not have a first_name')
         return
     }
+    let TemplateId = 39188601
 
     let user = await prisma.user.findUnique({
         where: {
@@ -45,7 +47,8 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
     const { timezone, organization_id, team_id, team_name, role, player_id, phone, imageUrl, ...input } = payload
 
     if (!user?.email) {
-        const passwd = [
+        TemplateId = 39180237
+        passwd = [
             organization_id.substring(0, 3),
             input.first_name.substring(0, 5),
             new Date().getHours()
@@ -110,7 +113,6 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         })
     }
 
-    let sendEmail = false
     if (user && organization_id && session.user?.email) {
         const {
             organizations,
@@ -124,7 +126,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         if (orgMember) {
             console.log('Already', ['o', 'a', 'e', 'u', 'i'].includes(orgMember.role[0].toLowerCase()) ? 'an' : 'a', orgMember.role.toLowerCase(), 'of', orgMember.organization?.name)
         } else {
-            sendEmail = true
+
             await prisma.userOrganization.create({
                 data: {
                     organization_id,
@@ -143,7 +145,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
             if (teamMembership) {
                 console.log('Already', ['o', 'a', 'e', 'u', 'i'].includes(teamMembership.role[0].toLowerCase()) ? 'an' : 'a', teamMembership.role.toLowerCase(), 'of', teamMembership.team?.name)
             } else {
-                sendEmail = true
+
                 await prisma.teamMember.create({
                     data: {
                         organization_id,
@@ -156,7 +158,9 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
             }
         }
 
-        if (sendEmail) {
+        if (!user_id) return
+
+        if (TemplateId) {
             await createEmailNotification({
                 sender: {
                     email: session.user.email,
@@ -166,22 +170,23 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
                     email: payload.email,
                     name: [payload.first_name, payload.last_name].join(' '),
                 },
-                TemplateId: payload.team_name ? 39180237 : 39188601,
+                TemplateId,
                 TemplateModel: {
                     sender: session.user.first_name,
                     name: payload.first_name,
                     player: "your child's",
                     team: payload.team_name || "team",
                     product_name: "Club Athletix",
+                    passwd,
                     action_url: `https://clubathletix.com/invitations/accept/${user_id}?team=${team_id}`
                 }
             })
         }
-        const team = await prisma.team.findUnique({
+        const team = team_id ? await prisma.team.findUnique({
             where: {
                 team_id,
             }
-        }) as unknown as Team
+        }) as unknown as Team : undefined
         return {
             ...user,
             role,

@@ -35,6 +35,7 @@ export function InviteMemberDialog(
     phone: string
     organization_id: string
     team_id?: string
+    team_name?: string
     imageUrl?: string
     role: 'Coach' | 'Parent' | 'Assistant Coach'
   }>({
@@ -47,11 +48,24 @@ export function InviteMemberDialog(
     organization_id,
   })
 
+  console.log(payload)
+
   useEffect(() => {
     if (!Boolean(team_id)) {
       getOrganizationTeams(organization_id).then(setTeams)
     }
   }, [team_id])
+
+  useEffect(() => {
+    if (teams.length === 1) {
+      selectTeamId(teams[0].team_id)
+      setPayload((prev) => ({
+        ...prev,
+        team_id: teams[0].team_id,
+        team_name: teams[0].name,
+      }))
+    }
+  }, [teams])
 
   const handleSubmit = useCallback(async () => {
     if (payload.first_name && payload.last_name && organization_id) {
@@ -132,9 +146,12 @@ export function InviteMemberDialog(
                     defaultValue={payload.team_id}
                     disabled={isLoading}
                     onChange={(evt) => {
+                      selectTeamId(evt.currentTarget.value)
+                      const team_name = teams.find((team) => team.team_id === evt.currentTarget.value)?.name
                       setPayload({
                         ...payload,
                         [evt.currentTarget.name]: evt.currentTarget.value,
+                        team_name,
                       })
                     }}
                   >

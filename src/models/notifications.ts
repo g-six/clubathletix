@@ -14,7 +14,7 @@ export async function createEmailNotification({
     }
     TemplateId?: string | number,
     TemplateModel: {
-        [k: string]: string
+        [k: string]: string | undefined
     }
 }) {
     const { POSTMARK_SERVER_TOKEN, POSTMARK_ENTRYPOINT, } = process.env as { [k: string]: string }
@@ -37,5 +37,7 @@ export async function createEmailNotification({
         headers: postMarkHeaders,
         body: JSON.stringify(emailData)
     })
+
+    console.log(JSON.stringify({ emailData, mail }, null, 2))
     return mail
 }

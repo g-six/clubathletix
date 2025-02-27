@@ -27,7 +27,6 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/20/solid'
 import { cookies } from 'next/headers'
-import Login from './login/page'
 import { OrganizationDropdown } from './organizations/dropdown'
 
 export async function ApplicationLayout({
@@ -39,20 +38,18 @@ export async function ApplicationLayout({
 }) {
   const cookieStore = await cookies()
 
-  if (!cookieStore.get('session_id')?.value)
-    return (
-      <section className="flex h-screen flex-col items-center justify-center px-8">
-        <Login />
-      </section>
-    )
   let organization_id = cookieStore.get('organization_id')?.value || ''
+  let basepath = '/'
+  if (cookieStore.get('session_id')?.value) {
+    const organizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
+    if (!organization_id) {
+      organization_id = organizations[0]?.organization_id || ''
+    }
 
-  const organizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
-  if (!organization_id) {
-    organization_id = organizations[0]?.organization_id || ''
+    basepath = `/organizations/${organization_id}`
+  } else {
+    return <section className="flex h-screen flex-col items-center justify-center px-8">{children}</section>
   }
-
-  const basepath = `/organizations/${organization_id}`
 
   return (
     <SidebarLayout
