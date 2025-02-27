@@ -31,6 +31,14 @@ export async function POST(request: Request) {
                     hashed_password: undefined,
                 }
             } else if (password_reset_token === user.password_reset_token) {
+                await prisma.user.update({
+                    where: {
+                        email: payload.email,
+                    },
+                    data: {
+                        password_reset_token: null,
+                    }
+                })
                 session_user.user = {
                     ...user,
                     password_reset_token: undefined,
