@@ -9,6 +9,7 @@ import { onFileChange } from '@/lib/file-helper'
 import { createOrganization } from '@/services/organization.service'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { Prisma } from '@prisma/client'
+import cookieJar from 'js-cookie'
 import { useCallback, useState } from 'react'
 import { Divider } from '../divider'
 import { Heading, Subheading } from '../heading'
@@ -42,6 +43,8 @@ export function CreateOrganizationForm() {
       toggleLoader(false)
     }
   }, [payload])
+
+  if (!cookieJar.get('session_id')) location.href = '/login'
 
   return (
     <form action={handleSubmit}>

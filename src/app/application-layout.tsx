@@ -40,8 +40,9 @@ export async function ApplicationLayout({
 
   let organization_id = cookieStore.get('organization_id')?.value || ''
   let basepath = '/'
+  let organizations: Awaited<ReturnType<typeof getOrganizationsByUserId>> = []
   if (cookieStore.get('session_id')?.value) {
-    const organizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
+    organizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
     if (!organization_id) {
       organization_id = organizations[0]?.organization_id || ''
     }
