@@ -150,7 +150,7 @@ export function EventDialog(
               width={80}
               height={80}
               title={props.match.team.name}
-              className="mx-auto w-12 sm:w-24"
+              className="mx-auto w-12 rounded-full sm:w-24"
             />
           ) : (
             <GenericTeamLogo className="mx-auto aspect-square w-12 text-zinc-500 sm:w-24" />
