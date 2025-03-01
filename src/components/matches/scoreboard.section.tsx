@@ -95,7 +95,7 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
           <div className="mb-2 text-xs font-bold lg:text-xs">{homeSide.team}</div>
         </section>
         <section>
-          <GameActionButton match={match} />
+          {Boolean(teamAdmin) && <GameActionButton match={match} />}
           <p className="mt-2 font-mono text-sm font-black">{timeElapsed === '0' ? '--:--' : timeElapsed}</p>
         </section>
         <section className="flex w-1/5 flex-col gap-2 sm:w-2/5">
