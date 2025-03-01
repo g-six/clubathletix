@@ -48,7 +48,6 @@ export async function findLeagues(input: Prisma.LeagueWhereInput, include?: Pris
 }
 
 export async function getLeague(league_id: string) {
-    console.log({ league_id })
     try {
         const where = Prisma.validator<Prisma.LeagueWhereInput>()({
             league_id

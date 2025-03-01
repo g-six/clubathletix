@@ -53,7 +53,7 @@ export function DropdownMenu({
 export function DropdownItem({
   className,
   ...props
-}: { className?: string } & (
+}: { className?: string; action?: () => void } & (
   | Omit<Headless.MenuItemProps<'button'>, 'as' | 'className'>
   | Omit<Headless.MenuItemProps<typeof Link>, 'as' | 'className'>
 )) {
@@ -77,6 +77,17 @@ export function DropdownItem({
     // Avatar
     '*:data-[slot=avatar]:mr-2.5 *:data-[slot=avatar]:-ml-1 *:data-[slot=avatar]:size-6 sm:*:data-[slot=avatar]:mr-2 sm:*:data-[slot=avatar]:size-5'
   )
+
+  if ('action' in props) {
+    const { children, ...rest } = props
+    return (
+      <Headless.MenuItem as="form" className={classes} action={props.action}>
+        <button type="submit" className={clsx(classes, 'w-full !p-0')}>
+          <>{props.children}</>
+        </button>
+      </Headless.MenuItem>
+    )
+  }
 
   return 'href' in props ? (
     <Headless.MenuItem as={Link} {...props} className={classes} />

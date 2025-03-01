@@ -78,14 +78,13 @@ export const SidebarItem = forwardRef(function SidebarItem(
     className,
     children,
     ...props
-  }: { current?: boolean; className?: string; children: React.ReactNode } & (
+  }: { href?: string; current?: boolean; className?: string; children: React.ReactNode } & (
     | Omit<Headless.ButtonProps, 'as' | 'className'>
     | Omit<Headless.ButtonProps<typeof Link>, 'as' | 'className'>
   ),
   ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>
 ) {
   const pathname = usePathname()
-
   let classes = clsx(
     // Base
     'flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5',
@@ -111,9 +110,19 @@ export const SidebarItem = forwardRef(function SidebarItem(
   let { href } = props as unknown as {
     href?: string
   }
-  if (href?.startsWith('/organizations/') && pathname.startsWith('/organizations/')) {
-    const segments = pathname.split('/').filter(Boolean).slice(0, 2)
-    href = ['', ...segments, href.split('/').filter(Boolean).slice(2)].join('/')
+
+  if (
+    href &&
+    href !== '#' &&
+    !href.startsWith('/organizations/') &&
+    !href.startsWith('/') &&
+    pathname.startsWith('/organizations/')
+  ) {
+    const [, organization_id] = pathname.split('/').filter(Boolean)
+    href = `/organizations/${organization_id}/${href}`
+  } else if (typeof href !== undefined && href !== '#') {
+    if (href === '/') href = pathname.split('/').slice(0, 3).join('/')
+    else href = '/' + pathname.split('/').filter(Boolean).join('/')
   }
   isCurrentlyActive =
     isCurrentlyActive ||
@@ -142,6 +151,7 @@ export const SidebarItem = forwardRef(function SidebarItem(
         <Headless.CloseButton
           as={Link}
           {...props}
+          href={href || props.href || '#'}
           className={classes}
           data-current={current ? 'true' : undefined}
           ref={ref}

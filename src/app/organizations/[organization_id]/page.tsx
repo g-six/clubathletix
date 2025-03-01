@@ -3,8 +3,10 @@ import { cookies } from 'next/headers'
 import { Avatar } from '@/components/avatar'
 import { Badge } from '@/components/badge'
 import { Card } from '@/components/card'
+import Greeting from '@/components/greeting'
 import { Heading, Subheading } from '@/components/heading'
 import { CreateLeagueDialog } from '@/components/organizations/league.dialog'
+import { MatchDialog } from '@/components/organizations/match.dialog'
 import { InviteMemberDialog } from '@/components/organizations/member.dialog'
 import { CreateOrganizationForm } from '@/components/organizations/organization.form'
 import { TeamDialog } from '@/components/organizations/team.dialog'
@@ -27,15 +29,14 @@ export default async function Home(props: { params: Promise<unknown> }) {
   let matches: Prisma.MatchUncheckedCreateInput[] = organization?.matches || []
   let leagues: Prisma.LeagueUncheckedCreateInput[] = organization?.leagues || []
   let members = organization?.members || []
+  const managingRolesAt = members.filter((m) => ['owner', 'coach', 'assistant coach', 'team manager'].includes(m.role))
+  const manageableTeams = managingRolesAt.map((m) => teams.find((team) => team.team_id === m.team_id))
 
   return (
     <>
-      <Heading>
-        Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
-        {cookieStore.get('first_name')?.value}
-      </Heading>
+      <Greeting />
       <div className="mt-8 flex items-end justify-between">
-        <Subheading>Overview</Subheading>
+        <Subheading>{organization.name} Overview</Subheading>
         <div>
           <Select name="period">
             <option value="last_week">Last week</option>
@@ -47,7 +48,49 @@ export default async function Home(props: { params: Promise<unknown> }) {
       </div>
       <div className="mt-4 grid gap-8 lg:grid-cols-2">
         <Card
-          title="Upcoming matches / trainings"
+          title="Upcoming matches"
+          CreateDialog={
+            manageableTeams.length ? (
+              <MatchDialog
+                skeleton
+                teams={manageableTeams.filter(Boolean).map((t) => ({
+                  team_id: t?.team_id as string,
+                  name: t?.name as string,
+                }))}
+              >
+                Add match
+              </MatchDialog>
+            ) : (
+              <span />
+            )
+          }
+          href={`/organizations/${organization_id}/matches`}
+          contents={
+            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
+              {matches.map((match) => (
+                <Link
+                  href={`/match-control/${match.match_id}`}
+                  className="group flex flex-wrap sm:gap-1"
+                  key={match.match_id}
+                >
+                  <span className="font-bold underline group-hover:text-lime-500">
+                    {teams.find((t) => t.team_id === match.team_id)?.name}
+                  </span>
+                  <span>vs.</span>
+                  <span className="flex-1 group-hover:text-zinc-200">{match.opponent}</span>
+                  <span className="w-full sm:hidden" />
+                  <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                    {formatDateTime(new Date(match.match_date))}
+                  </Badge>
+                  <span className="h-2 w-full sm:hidden" />
+                </Link>
+              ))}
+              {matches.length === 0 && <span>No upcoming matches</span>}
+            </div>
+          }
+        />
+        <Card
+          title="Upcoming trainings"
           CreateDialog={<span />}
           href={`/organizations/${organization_id}/matches`}
           contents={
@@ -260,6 +303,90 @@ export default async function Home(props: { params: Promise<unknown> }) {
           ))}
         </TableBody>
       </Table>
+    </>
+  )
+}
+
+async function UserDashboard({
+  matches,
+  teams,
+}: {
+  matches: Prisma.MatchUncheckedCreateInput[]
+  teams: Prisma.TeamUncheckedCreateInput[]
+}) {
+  const cookieStore = await cookies()
+
+  return (
+    <>
+      <Heading>
+        Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
+        {cookieStore.get('first_name')?.value}
+      </Heading>
+      <div className="mt-8 flex items-end justify-between">
+        <Subheading>Overview</Subheading>
+        <div>
+          <Select name="period">
+            <option value="last_week">Last week</option>
+            <option value="last_two">Last two weeks</option>
+            <option value="last_month">Last month</option>
+            <option value="last_quarter">Last quarter</option>
+          </Select>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-8 lg:grid-cols-2">
+        <Card
+          title="Upcoming matches / trainings"
+          CreateDialog={<span />}
+          contents={
+            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
+              {matches.map((match) => (
+                <Link
+                  href={`/organizations/${match.organization_id}/teams/${match.team_id}/matches/${match.match_id}`}
+                  className="group flex flex-wrap sm:gap-1"
+                  key={match.match_id}
+                >
+                  <span className="font-bold underline group-hover:text-lime-500">
+                    {teams.find((t) => t.team_id === match.team_id)?.name}
+                  </span>
+                  <span>vs.</span>
+                  <span className="flex-1 group-hover:text-zinc-200">{match.opponent}</span>
+                  <span className="w-full sm:hidden" />
+                  <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                    {formatDateTime(new Date(match.match_date))}
+                  </Badge>
+                  <span className="h-2 w-full sm:hidden" />
+                </Link>
+              ))}
+              {matches.length === 0 && <span>No upcoming matches</span>}
+            </div>
+          }
+        />
+
+        <Card
+          title="Teams"
+          CreateDialog={<span />}
+          contents={
+            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
+              {teams.map((rec) => (
+                <Link
+                  href={`/organizations/${rec.organization_id}/teams/${rec.team_id}`}
+                  className="group flex flex-wrap sm:gap-1"
+                  key={rec.team_id}
+                >
+                  <span className="font-bold underline group-hover:text-lime-500">{rec.name}</span>
+                  <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                    {rec.age_group}
+                  </Badge>
+                  <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3">
+                    {rec.division}
+                  </Badge>
+                </Link>
+              ))}
+              {matches.length === 0 && <span>No upcoming matches</span>}
+            </div>
+          }
+        />
+      </div>
     </>
   )
 }

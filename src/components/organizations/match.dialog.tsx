@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/button'
-import { Checkbox, CheckboxField } from '@/components/checkbox'
 import { Dialog, DialogActions, DialogBody, DialogDescription, DialogTitle } from '@/components/dialog'
 import { Field, FieldGroup, Label } from '@/components/fieldset'
 import { Input } from '@/components/input'
@@ -10,19 +9,29 @@ import { Switch } from '@/components/switch'
 import { getAvailableLeaguesForTeam } from '@/services/league.service'
 import { createMatch } from '@/services/match.service'
 import { useCallback, useEffect, useState } from 'react'
+import DateField from '../date'
 
-export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsWithoutRef<typeof Button>) {
+export function MatchDialog(
+  props: { 'team-id'?: string; teams?: { team_id: string; name: string }[] } & React.ComponentPropsWithoutRef<
+    typeof Button
+  >
+) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
-  let [isInitiating, setIsInitiating] = useState(true)
+  let [isInitiating, setIsInitiating] = useState(!props?.teams?.length)
+  const tomorrow = new Date()
+  tomorrow.setTime(tomorrow.getTime() + 24 * 60 * 60 * 1000)
   const [payload, setPayload] = useState<{
-    [k: string]: string
+    [k: string]: string | undefined
   }>({
-    year: new Date().getFullYear().toString(),
+    year: tomorrow.getFullYear().toString(),
+    month: (tomorrow.getMonth() + 1).toString(),
+    day: tomorrow.getDate().toString(),
     team_id: props['team-id'],
     home_or_away: 'home',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   })
-
+  console.log(payload)
   const months = [
     'January',
     'February',
@@ -51,9 +60,11 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
 
   const handleSubmit = useCallback(async () => {
     toggleLoader(true)
-
+    console.log(payload)
     const match = await createMatch(payload)
-    location.reload()
+    if (match?.created_at) location.reload()
+
+    toggleLoader(false)
   }, [payload])
 
   const getLeagueOptions = useCallback(async (team_id: string) => {
@@ -83,8 +94,9 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
           setIsInitiating(true)
           setIsOpen(false)
         }}
+        size="xl"
       >
-        <DialogTitle>Create a match</DialogTitle>
+        <DialogTitle>Create a team match</DialogTitle>
 
         {isInitiating && isOpen ? (
           <>
@@ -97,8 +109,33 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
           <>
             <DialogDescription>Enter the details of the match you are creating</DialogDescription>
             <DialogBody>
-              <FieldGroup>
-                <Field>
+              <FieldGroup className="grid gap-x-1 sm:grid-cols-4">
+                {Boolean(props.teams?.length) && (
+                  <Field className="sm:col-span-2">
+                    <Label>Team</Label>
+                    <Select
+                      name="team_id"
+                      defaultValue=""
+                      disabled={isLoading}
+                      onChange={(evt) => {
+                        setPayload({
+                          ...payload,
+                          [evt.currentTarget.name]: evt.currentTarget.value,
+                        })
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select team&hellip;
+                      </option>
+                      {props.teams?.map((team) => (
+                        <option value={team.team_id} key={team.team_id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
+                <Field className="sm:col-span-2">
                   <Label>Opponent</Label>
                   <Input
                     name="opponent"
@@ -109,7 +146,7 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
                     autoFocus
                   />
                 </Field>
-                <Field>
+                <Field className="sm:col-span-2">
                   <Label>Venue</Label>
                   <Input
                     name="location"
@@ -135,52 +172,17 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
                     />
                   </div>
                 </Field>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Field className="w-48">
-                    <Label>Month</Label>
-                    <Select
-                      name="month"
-                      defaultValue=""
-                      disabled={isLoading}
-                      onChange={(evt) => {
-                        let year = currentDate.getFullYear()
-                        if (
-                          nextWeek.getFullYear() > currentDate.getFullYear() &&
-                          Number(evt.currentTarget.value) !== currentDate.getMonth()
-                        ) {
-                          year++
-                        }
-                        setPayload({
-                          ...payload,
-                          year: year.toString(),
-                          month: `${Number(evt.currentTarget.value) > 8 ? '' : '0'}${Number(evt.currentTarget.value) + 1}`,
-                        })
-                      }}
-                    >
-                      <option value="" disabled>
-                        Select month&hellip;
-                      </option>
-                      {availableMonths.map((month, index) => (
-                        <option value={index + 1} key={month}>
-                          {month}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field className="w-20">
-                    <Label>Day</Label>
-                    <Input
-                      disabled={isLoading}
-                      name="day"
-                      placeholder="Day"
-                      onChange={(evt) =>
-                        setPayload({
-                          ...payload,
-                          day: `${Number(evt.currentTarget.value) > 9 ? '' : '0'}${Number(evt.currentTarget.value)}`,
-                        })
-                      }
-                    />
-                  </Field>
+                <div className="sm:col-span-3">
+                  <DateField
+                    label="Date"
+                    onChange={(val) => {
+                      const [year, month, day] = val.split('-')
+                      setPayload({ ...payload, year, month, day })
+                    }}
+                    future-only
+                  />
+                </div>
+                <div className="sm:col-span-1">
                   <div className="flex flex-1 justify-end gap-1">
                     <Field className="w-16">
                       <Label>Hour</Label>
@@ -218,10 +220,6 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
                     </Field>
                   </div>
                 </div>
-                <CheckboxField disabled={isLoading}>
-                  <Checkbox name="notify" defaultChecked disabled={isLoading} />
-                  <Label>Add all players of the team to this match</Label>
-                </CheckboxField>
               </FieldGroup>
             </DialogBody>
             <div className="mt-4 w-full text-zinc-400">

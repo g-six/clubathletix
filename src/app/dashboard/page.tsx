@@ -1,19 +1,12 @@
-import { cookies } from 'next/headers'
-
 import { Stat } from '@/app/stat'
 import { Heading, Subheading } from '@/components/heading'
 import { Select } from '@/components/select'
-import { getRecentMembers } from '@/data'
 
 export default async function Home() {
-  const cookieStore = await cookies()
-  let orders = await getRecentMembers()
-
   return (
     <>
       <Heading>
         Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
-        {cookieStore.get('first_name')?.value}
       </Heading>
       <div className="mt-8 flex items-end justify-between">
         <Subheading>Overview</Subheading>

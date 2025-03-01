@@ -1,5 +1,5 @@
 import { prisma } from '@/prisma'
-import { Prisma } from '@prisma/client'
+import { League, Match, Player, Prisma, Team, TeamMember, TeamPlayer, User } from '@prisma/client'
 
 export async function createMatch(payload: unknown) {
     const {
@@ -14,15 +14,17 @@ export async function createMatch(payload: unknown) {
         [k: string]: string
     }
     const today = new Date()
-    const match_date = new Date(
+    const match_date = [[
         year ? Number(year) : today.getFullYear(),
-        month ? Number(month) - 1 : today.getMonth(),
-        day ? Number(day) : today.getDate(),
+        month ? Number(month) : today.getMonth() + 1,
+        day ? Number(day) : today.getDate()
+    ].map(num => num < 10 ? `0${num}` : num).join('-'),
+    [
         hour ? Number(hour) : 8,
-        minute ? Number(minute) : 30
-    )
+        minute ? Number(minute) : 30].map(num => num < 10 ? `0${num}` : num).join(':')
+    ].join('T')
     try {
-        await fetch('/api/matches', {
+        const res = await fetch('/api/matches', {
             method: 'POST',
             body: JSON.stringify({
                 team_id,
@@ -34,9 +36,13 @@ export async function createMatch(payload: unknown) {
                 home_or_away,
             })
         })
+        if (res.ok)
+            return await res.json()
     } catch (error) {
         console.log('error')
     }
+
+    return null
 }
 
 export async function createMatchEvent(payload: unknown) {
@@ -47,22 +53,17 @@ export async function createMatchEvent(payload: unknown) {
         player_id,
         event,
         assist,
+        logged_at
     } = payload as {
         [k: string]: string
     }
-
-    const event_time = new Date().toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    })
 
     try {
         if (event === 'goal') {
             await fetch(`/api/matches/${match_id}/${event}`, {
                 method: 'POST',
                 body: JSON.stringify({
-                    event_time: event_time.substring(0, 5),
+                    logged_at,
                     side,
                     jersey_number,
                     player_id,
@@ -83,6 +84,33 @@ export async function getMatch(match_id: string) {
     }
     try {
         const match = await fetch(`/api/matches/${match_id}`)
+        if (match.ok) {
+
+            return await match.json()
+        }
+        return {
+            statusText: match.statusText,
+            status: match.status,
+        }
+    } catch (error) {
+        console.log('error')
+        console.log(error)
+    }
+}
+
+export async function startMatch(match_id: string, localized_time: string, reason: 'start 1st half' | 'start 2nd half' | 'start match' = 'start match') {
+    if (!match_id) {
+        console.log('Invalid match id', match_id)
+        return
+    }
+    try {
+        const match = await fetch(`/api/matches/${match_id}/start`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                localized_time,
+                reason
+            })
+        })
         return await match.json()
     } catch (error) {
         console.log('error')
@@ -90,21 +118,88 @@ export async function getMatch(match_id: string) {
     }
 }
 
-export type CreateMatch = Prisma.Args<typeof prisma.match, 'create'>['data']
-export type MatchRecord = CreateMatch & {
-    team: Prisma.Args<typeof prisma.team, 'create'>['data'] & {
-        players: {
-            player_id: string
-            position: string
-            jersey_number: string
-            player: {
-                first_name: string
-                last_name: string
+export async function stopMatch(
+    match_id: string,
+    localized_time: string,
+    reason: 'end 1st half' | 'end 2nd half' | 'end match' = 'end match'
+) {
+    if (!match_id) {
+        console.log('Invalid match id', match_id)
+        return
+    }
+    try {
+        const match = await fetch(`/api/matches/${match_id}/stop`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                localized_time,
+                reason
+            })
+        })
+        return await match.json()
+    } catch (error) {
+        console.log('error')
+        console.log(error)
+    }
+}
+
+export async function createVideo({
+    match_id,
+    match_event_id,
+    title,
+    file,
+}: {
+    size: number
+    match_id: string
+    match_event_id: string
+    title: string
+    file: File
+}) {
+    const signing = await fetch(`/api/matches/${match_id}/upload`, {
+        method: 'PUT',
+        body: JSON.stringify({ title, type: file.type, extension: file.name.split('.').pop() }),
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+
+    const res = await signing.json()
+    if (res.upload_link) {
+        const upload = await fetch(`/api/matches/${match_id}/upload`, {
+            method: 'PATCH',
+            body: file,
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'X-Upload-Link': res.upload_link,
+                'X-File-Name': res.Key,
+                'X-Match-Event-Id': match_event_id
             }
-        }[]
+        })
+
+        if (upload.ok) {
+            const results = await upload.json()
+            return {
+                results,
+                Key: res.Key
+            }
+        }
+    }
+}
+
+export type CreateMatch = Prisma.Args<typeof prisma.match, 'create'>['data']
+export type MatchRecord = Match & {
+    league: League
+    team: Team & {
+        members: (TeamMember & {
+            user: User
+        })[]
+        players: (TeamPlayer & {
+            player: Player & {
+                user?: User
+            }
+        })[]
     }
     events: (CreateMatchEvent & {
-        player: Prisma.Args<typeof prisma.player, 'findUnique'>
+        player: Player
     })[]
 }
 export type CreateMatchEvent = Prisma.Args<typeof prisma.matchEvent, 'create'>['data']

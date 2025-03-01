@@ -5,7 +5,7 @@ import { Card } from '@/components/card'
 import { Heading, Subheading } from '@/components/heading'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { formatDateTime } from '@/lib/date-helper'
-import { getOrganization, TeamMember, User } from '@/models/organization'
+import { getOrganization } from '@/models/organization'
 import Link from 'next/link'
 import { MatchDialog } from '../../../../components/organizations/match.dialog'
 
@@ -18,33 +18,13 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
     team_id: string
     name: string
     age_group: string
-    members: (TeamMember & { user: User })[]
-
-    players: {
-      player_id: string
-      jersey_number: string
-      position: string
-      player: {
-        birth_date?: number
-        birth_month?: number
-        birth_year: number
-        first_name: string
-        last_name: string
-        user_id?: string
-      }
-    }[]
+    division: string
   }[] = organization?.teams || []
-  let matches: ({
-    [k: string]: string
-  } & {
-    team: {
-      [k: string]: string
-    }
-  })[] = organization?.matches || []
 
-  teams.forEach((team) => {
-    team.members = organization.members.filter((member: TeamMember) => member.team_id === team.team_id)
-  })
+  let matches: {
+    [k: string]: string | null | Date | number
+  }[] = organization?.matches || []
+
   return (
     <>
       <Heading>
@@ -61,12 +41,14 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
               {matches.map((match) => (
-                <Link href={`/matches/${match.match_id}`} className="group flex gap-1" key={match.match_id}>
-                  <span className="font-bold underline group-hover:text-lime-500">{match.team.name}</span>
+                <Link href={`/matches/${match.match_id}`} className="group flex gap-1" key={match.match_id as string}>
+                  <span className="font-bold underline group-hover:text-lime-500">
+                    {teams.find((t) => t.team_id === match.team_id)?.name}
+                  </span>
                   <span>vs.</span>
-                  <span className="flex-1 group-hover:text-zinc-200">{match.opponent}</span>
+                  <span className="flex-1 group-hover:text-zinc-200">{match.opponent as string}</span>
                   <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                    {formatDateTime(new Date(match.match_date))}
+                    {match.match_date && formatDateTime(new Date(match.match_date))}
                   </Badge>
                 </Link>
               ))}
@@ -89,38 +71,14 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
         />
         <Card
           href="/matches/new"
-          title="My teams"
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U15 Titans</span>
-              </Link>
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U14 Selects</span>
-              </Link>
-            </div>
-          }
+          title="Upcoming team trainings"
+          contents={<div className="flex flex-col gap-0 text-xs/5 text-zinc-500"></div>}
         />
 
         <Card
           href="/matches/new"
-          title="Standings"
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U15 Titans</span>
-                <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                  #3 - 14 pts
-                </Badge>
-              </Link>
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U14 Selects</span>
-                <Badge color="lime" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                  #2 - 15 pts
-                </Badge>
-              </Link>
-            </div>
-          }
+          title="Previous matches"
+          contents={<div className="flex flex-col gap-0 text-xs/5 text-zinc-500"></div>}
         />
       </div>
       <Subheading className="mt-14">Teams</Subheading>
@@ -144,7 +102,7 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
                 {team.name} ({team.age_group})
               </TableCell>
               <TableCell>
-                {team.members
+                {organization.members
                   .filter((m) => m.role.toLowerCase().includes('coach'))
                   .map((m) =>
                     [
@@ -161,7 +119,7 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
                   .join(' • ')}
               </TableCell>
               <TableCell className="text-pink dark:text-pink-300">
-                {matches?.find((m) => m.team_id === team.team_id)?.opponent || 'None scheduled'}
+                {(matches?.find((m) => `${m.team_id}` === `${team.team_id}`)?.opponent as string) || 'None scheduled'}
               </TableCell>
               <TableCell className="text-right">
                 <MatchDialog outline team-id={team.team_id}>

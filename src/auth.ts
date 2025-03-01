@@ -1,35 +1,63 @@
-import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/prisma"
-import CredentialsProvider from "next-auth/providers/credentials"
+import NextAuth from 'next-auth'
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-    adapter: PrismaAdapter(prisma),
-    providers: [CredentialsProvider({
-        // The name to display on the sign in form (e.g. "Sign in with...")
-        name: "Credentials",
-        // `credentials` is used to generate a form on the sign in page.
-        // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-        // e.g. domain, username, password, 2FA token, etc.
-        // You can pass any HTML attribute to the <input> tag through the object.
+import { ZodError } from 'zod'
+import { authConfig } from './auth.config'
+
+import Credentials from 'next-auth/providers/credentials'
+import { login } from './models/auth'
+import { signInSchema } from "./lib/zod"
+
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+    ...authConfig,
+
+    providers: [Credentials({
         credentials: {
-            username: { label: "Email", type: "email", placeholder: "your@email.com" },
-            password: { label: "Password", type: "password" }
+            email: {},
+            password: {},
         },
-        async authorize(credentials, req) {
-            // Add logic here to look up the user from the credentials supplied
-            const user = { id: "1", name: "J Smith", email: "jsmith@example.com" }
 
-            if (user) {
-                // Any object returned will be saved in `user` property of the JWT
-                return user
-            } else {
-                // If you return null then an error will be displayed advising the user to check their details.
-                return null
+        async authorize(credentials) {
+            try {
+                const { email, password } = await signInSchema.parseAsync(credentials)
 
-                // You can also Reject this callback with an Error thus the user will be sent to the error page with the error message as a query parameter
+
+                const results = await login(email, password)
+
+                if (!results) {
+                    throw new Error("Invalid credentials.")
+
+                }
+                const user = {
+                    id: results.user_id,
+                    email: results.email,
+                    name: [results.last_name, results.first_name].filter(Boolean).join(', '),
+                    image: results.image,
+                }
+                return {
+                    ...results,
+                    user
+                }
+            } catch (error) {
+                if (error instanceof ZodError) {
+                    // Return `null` to indicate that the credentials are invalid
+                    return null
+                }
             }
-        }
-    })
-    ],
+            return null
+        },
+
+    })],
+    callbacks: {
+        async session({ session: userSession, token }) {
+            const [last_name, first_name] = (userSession.user.name || '').split(', ')
+            return {
+                expires: userSession.expires,
+                user: {
+                    email: userSession.user.email
+                },
+            }
+        },
+    },
+
 })

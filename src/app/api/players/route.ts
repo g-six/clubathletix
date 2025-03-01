@@ -1,35 +1,45 @@
+import { auth } from '@/auth'
 import { createSlug } from '@/lib/string-helper'
+import { getAuthForOperation } from '@/models/auth'
 import { getPresignedUrlWithClient } from '@/models/file'
-import { createPlayer } from '@/models/player'
-import { createSession } from '@/models/session'
+import { createPlayer, findPlayers } from '@/models/player'
+import { getUserByEmail } from '@/models/user'
 import { prisma } from '@/prisma'
 import { randomUUID } from 'crypto'
-import { get } from 'http'
-import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
-  const cookieStore = await cookies()
-  const created_by = cookieStore.get('user_id')?.value
-  if (created_by) {
-    const session = await createSession(created_by)
-    return Response.json(session, {
-      status: 200
-    })
+  const url = new URL(request.url)
+  const searchParams = Object.fromEntries(
+    new URLSearchParams(url.search).entries()
+  )
+
+  const session = await auth()
+  if (session?.user?.email) {
+    const user = await getUserByEmail(session.user.email)
+    const created_by = user?.user_id
+
+    if (created_by && (searchParams.first_name || searchParams.last_name)) {
+      const players = await findPlayers(searchParams)
+      return Response.json(players, {
+        status: 200
+      })
+    }
   }
   return Response.json({
     success: false,
     ...request,
   })
+
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies()
-  const created_by = cookieStore.get('user_id')?.value
-  if (created_by) {
-    let photoUrl: string | undefined = undefined
-    const session = await createSession(created_by)
-    if (session) {
-      const { team_id, photo, jersey_number, position, ...playerInput } = await request.json()
+  const session = await getAuthForOperation()
+
+  if (session?.user_id) {
+    const created_by = session?.user_id
+    if (created_by) {
+      let photoUrl: string | undefined = undefined
+      const { team_id, photo, jersey_number, position, parent, ...playerInput } = await request.json()
 
       if (photo) {
         try {

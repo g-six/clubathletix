@@ -83,7 +83,7 @@ export function TrainingDialog(props: { 'team-id': string } & React.ComponentPro
           setIsOpen(false)
         }}
       >
-        <DialogTitle>Create a match</DialogTitle>
+        <DialogTitle>Create a training session</DialogTitle>
 
         {isInitiating && isOpen ? (
           <>

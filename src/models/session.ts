@@ -2,12 +2,13 @@ import { prisma } from '@/prisma'
 import { Prisma, User, Session } from '@prisma/client'
 import { cookies } from 'next/headers'
 import { getOrganizationsByUserId } from './organization'
-import { redirect } from 'next/navigation'
+import bcrypt from 'bcryptjs'
 
 const hoursBeforeExpiry = 24 * 14
 type SessionWithUser = Session & {
     user?: User
 }
+
 export async function createSession(user_id: string, initialise?: boolean): Promise<SessionWithUser | undefined> {
     const cookieStore = await cookies()
     let session_id = cookieStore.get('session_id')?.value || ''
@@ -85,13 +86,19 @@ export async function createSession(user_id: string, initialise?: boolean): Prom
 
 export async function saveUserSession(user: User, expires: Date = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)) {
     const cookieStore = await cookies()
+    let object: {
+        [k: string]: string
+    } = {}
     Object.entries(user)
         .filter(([_, value]) =>
             typeof value === 'string' && !_.startsWith('hashed')
         )
         .forEach(([name, v]) => {
             const value = v as string
-
+            object = {
+                ...object,
+                [name]: value
+            }
             const cookie = {
                 name,
                 value,
@@ -100,6 +107,8 @@ export async function saveUserSession(user: User, expires: Date = new Date(Date.
             }
             cookieStore.set(cookie)
         })
+
+    return object
 }
 export async function saveSession(session: Session, expires: Date = new Date(Date.now() + 60 * 60 * hoursBeforeExpiry * 1000)) {
     const cookieStore = await cookies()

@@ -118,9 +118,9 @@ model Organization {
   deleted_at         DateTime?
   updated_by         String?
   logo               String?
-  League             League[]
-  Team               Team[]
-  UserOrganization   UserOrganization[]
+  leagues            League[]
+  teams              Team[]
+  members            UserOrganization[]
 
   @@index([name, organization_type])
   @@map("organizations")
@@ -210,6 +210,7 @@ model PlayerParent {
 model Team {
   organization_id String
   league_id       String
+  logo            String?
   name            String
   age_group       String
   division        String
@@ -275,7 +276,7 @@ model TeamPlayer {
   team            Team       @relation(fields: [team_id], references: [team_id])
   trainings       Training[] @relation("TeamPlayerToTraining")
 
-  @@unique([organization_id, team_id, player_id])
+  @@unique([team_id, player_id])
   @@index([player_id])
   @@index([team_id])
   @@map("team_players")
@@ -332,6 +333,17 @@ model Match {
   events          MatchEvent[]
   league          League        @relation(fields: [league_id], references: [league_id])
   team            Team          @relation(fields: [team_id], references: [team_id])
+  fh_start        DateTime?
+  fh_end          DateTime?
+  sh_start        DateTime?
+  sh_end          DateTime?
+  otfh_start      DateTime?
+  otfh_end        DateTime?
+  otsh_start      DateTime?
+  otsh_end        DateTime?
+  regular_length    Int?        @default(35)
+  overtime_length   Int?        @default(10)
+  sizing            String?     @default("halves")
 
   @@unique([league_id, team_id, match_date])
   @@index([team_id, opponent])
@@ -376,23 +388,25 @@ model MatchPlayer {
 }
 
 model MatchEvent {
-  match_event_id String    @id @default(cuid())
-  match_id       String
-  player_id      String
-  event_type     String    @default("subbed_out")
-  description    String?
-  created_at     DateTime  @default(now())
-  created_by     String
-  updated_at     DateTime  @updatedAt
-  updated_by     String?
-  deleted_at     DateTime?
-  video_url      String?
-  event_minute   Int
-  player         Player    @relation(fields: [player_id], references: [player_id])
-  match          Match     @relation(fields: [match_id], references: [match_id])
+  match_event_id    String    @id @default(cuid())
+  match_id          String
+  player_id         String?
+  opponent_number   String?
+  event_type        String    @default("subbed_out")
+  description       String?
+  created_at        DateTime  @default(now())
+  created_by        String
+  updated_at        DateTime  @updatedAt
+  updated_by        String?
+  deleted_at        DateTime?
+  video_url         String?
+  logged_at  String?
+  player            Player?    @relation(fields: [player_id], references: [player_id])
+  match             Match     @relation(fields: [match_id], references: [match_id])
 
-  @@index([match_id, event_minute])
+  @@index([match_id, logged_at])
   @@index([player_id, event_type])
-  @@index([event_type, event_minute])
+  @@index([opponent_number, event_type])
+  @@index([event_type, logged_at])
   @@map("match_events")
 }

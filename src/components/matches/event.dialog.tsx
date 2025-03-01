@@ -5,6 +5,7 @@ import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/dia
 import { Field, FieldGroup, Label } from '@/components/fieldset'
 import { Input } from '@/components/input'
 import { MatchRecord } from '@/services/match.service'
+import Image from 'next/image'
 import { useState } from 'react'
 import { Listbox, ListboxLabel, ListboxOption } from '../listbox'
 
@@ -21,7 +22,7 @@ interface EventMatch {
     match_event_id: string
     player_id: string
     event_type: string
-    event_time: string
+    logged_at: string
   }[]
   team: {
     age_group: string
@@ -60,10 +61,10 @@ export function EventDialog(
     side: 'home' | 'away'
   }[] = []
   props.match.events.forEach((event) => {
-    if (props.event === 'goal' && event.player_id && event.event_type === 'goal') {
+    if (props.match.home_or_away && props.event === 'goal' && event.player_id && event.event_type === 'goal') {
       goals.push({
         player_id: event.player_id,
-        side: props.match.home_or_away,
+        side: props.match.home_or_away as 'home' | 'away',
       })
     }
   })
@@ -140,9 +141,25 @@ export function EventDialog(
   return (
     <>
       {side ? (
-        <Button type="button" onClick={() => setIsOpen(true)} {...others}>
-          {events.goals.filter((g) => g.side === side).length}
-        </Button>
+        <>
+          {props.match.team.logo && side === props.match.home_or_away ? (
+            <Image
+              alt={props.match.team.name}
+              priority
+              src={`/api/files/${props.match.team.logo}`}
+              width={80}
+              height={80}
+              title={props.match.team.name}
+              className="mx-auto w-12 sm:w-24"
+            />
+          ) : (
+            <GenericTeamLogo className="mx-auto aspect-square w-12 text-zinc-500 sm:w-24" />
+          )}
+          <span className="h-8 w-full" />
+          <Button type="button" onClick={() => setIsOpen(true)} {...others}>
+            {events.goals.filter((g) => g.side === side).length}
+          </Button>
+        </>
       ) : (
         <div className="relative flex w-full gap-1">
           <div className="relative w-1/2 text-left">
@@ -315,5 +332,18 @@ export function EventDialog(
         </DialogActions>
       </Dialog>
     </>
+  )
+}
+
+export function GenericTeamLogo(props: { className?: string }) {
+  return (
+    <svg viewBox="0 0 166 166" fill="none" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="m78.091 0 5.967 5.676c15.038 14.306 35.323 23.067 57.663 23.067.356 0 .711-.002 1.065-.006l6.363-.08 1.988 6.072a102.026 102.026 0 0 1 5.045 31.782c0 47.391-32.269 87.19-75.928 98.477l-2.163.559-2.163-.559C32.27 153.701 0 113.902 0 66.511c0-11.085 1.769-21.772 5.045-31.782l1.988-6.072 6.363.08c.354.004.71.006 1.065.006 22.34 0 42.625-8.761 57.664-23.067L78.09 0ZM19.846 46.033a84.814 84.814 0 0 0-2.492 20.478c0 38.459 25.662 70.919 60.737 81.006 35.075-10.087 60.738-42.547 60.738-81.006 0-7.071-.866-13.93-2.493-20.478-22.009-1.16-42.166-9.387-58.245-22.453-16.079 13.066-36.235 21.293-58.245 22.453Z"
+        fill="currentColor"
+      ></path>
+    </svg>
   )
 }

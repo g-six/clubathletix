@@ -4,3 +4,7 @@
   --font-sans: Inter, sans-serif;
   --font-sans--font-feature-settings: 'cv11';
 }
+
+nextjs-portal {
+  display: none !important;
+}

@@ -20,3 +20,17 @@ export async function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
         }
     }
 }
+
+export async function onVideoFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    if (event.target.files && event.target.files.length > 0) {
+        const file = event.target.files[0]
+        try {
+            return {
+                file,
+                size: file.size
+            }
+        } catch (error) {
+            console.error("Error converting file to Base64:", error)
+        }
+    }
+}

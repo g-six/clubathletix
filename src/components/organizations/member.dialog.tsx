@@ -37,18 +37,16 @@ export function InviteMemberDialog(
     team_id?: string
     team_name?: string
     imageUrl?: string
-    role: 'Coach' | 'Parent' | 'Assistant Coach'
+    role: 'coach' | 'parent' | 'assistant coach' | 'team manager'
   }>({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
     team_id,
-    role: 'Parent',
+    role: 'parent',
     organization_id,
   })
-
-  console.log(payload)
 
   useEffect(() => {
     if (!Boolean(team_id)) {
@@ -78,6 +76,7 @@ export function InviteMemberDialog(
       })
         .then(() => {
           setIsOpen(false)
+          location.reload()
         })
         .finally(() => {
           toggleLoader(false)
@@ -136,8 +135,8 @@ export function InviteMemberDialog(
             )}
           </label>
 
-          <FieldGroup className="mt-4 grid gap-x-4 sm:grid-cols-3">
-            {teams.length && (
+          <FieldGroup className="mt-4 grid gap-x-4 sm:grid-cols-5">
+            {Boolean(teams.length) && (
               <>
                 <Field className="sm:col-span-2">
                   <Label>Team</Label>
@@ -168,7 +167,7 @@ export function InviteMemberDialog(
               </>
             )}
 
-            <Field>
+            <Field className="sm:col-span-2">
               <Label>Role</Label>
               <Select
                 name="role"
@@ -185,10 +184,10 @@ export function InviteMemberDialog(
                   Select role&hellip;
                 </option>
 
-                <option value="Coach">Coach</option>
-                <option value="Parent">Parent</option>
-                <option value="Assistant Coach">Assistant Coach</option>
-                <option value="Team Manager">Team Manager</option>
+                <option value="coach">Coach</option>
+                <option value="parent">Parent</option>
+                <option value="assistant coach">Assistant Coach</option>
+                <option value="team manager">Team Manager</option>
               </Select>
             </Field>
           </FieldGroup>
@@ -260,8 +259,10 @@ export function InviteMemberDialog(
                 <img title="loading" src="/loaders/default.gif" className="size-4 rounded-full bg-white" />
                 <span>Emailing...</span>
               </>
+            ) : payload.role === 'parent' ? (
+              'Next'
             ) : (
-              'Send invite'
+              'Send Invite'
             )}
           </Button>
         </DialogActions>

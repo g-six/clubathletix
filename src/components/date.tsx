@@ -10,12 +10,14 @@ export function DateField<T extends React.ElementType = typeof FieldGroup>({
   onChange,
   minYear,
   maxYear,
+  ...props
 }: {
   disabled?: boolean
   label?: string
   defaultValue?: Date
   minYear?: number
   maxYear?: number
+  'future-only'?: boolean
   onChange(str: string): void
 }) {
   const currentDate = new Date()
@@ -24,7 +26,7 @@ export function DateField<T extends React.ElementType = typeof FieldGroup>({
     month: number
     day: number
   }>({
-    year: defaultValue?.getFullYear() || currentDate.getFullYear(),
+    year: defaultValue?.getFullYear() || maxYear || currentDate.getFullYear(),
     month: (defaultValue?.getMonth() || currentDate.getMonth()) + 1,
     day: defaultValue?.getDate() || currentDate.getDate(),
   })
@@ -53,6 +55,7 @@ export function DateField<T extends React.ElementType = typeof FieldGroup>({
   }
 
   function getYears() {
+    if (props['future-only']) return [new Date().getFullYear(), new Date().getFullYear() + 1]
     if (minYear && maxYear) return Array.from({ length: maxYear - minYear }, (_, i) => minYear + i).reverse()
     else if (minYear && !maxYear)
       return Array.from({ length: currentDate.getFullYear() - minYear }, (_, i) => minYear + i).reverse()
@@ -62,7 +65,7 @@ export function DateField<T extends React.ElementType = typeof FieldGroup>({
   }
 
   return (
-    <FieldGroup className="mt-4 grid w-full grid-cols-7 gap-x-4">
+    <FieldGroup className="grid w-full grid-cols-7 gap-x-1">
       <Field className="col-span-2 !mb-0">
         <Label>{label}</Label>
         <Select
@@ -111,7 +114,7 @@ export function DateField<T extends React.ElementType = typeof FieldGroup>({
           ))}
         </Select>
       </Field>
-      <Field className="!mb-0 w-20 pt-6">
+      <Field className="col-span-2 !mb-0 pt-6">
         <Label className="sr-only">Day</Label>
         <Select
           name="day"
@@ -125,9 +128,7 @@ export function DateField<T extends React.ElementType = typeof FieldGroup>({
               }))
           }}
         >
-          <option value="" disabled>
-            Day
-          </option>
+          <option value="">Day</option>
           {getDaysInMonth().map((day) => (
             <option value={day} key={day}>
               {day}

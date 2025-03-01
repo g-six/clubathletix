@@ -1,25 +1,82 @@
 import { prisma } from '@/prisma'
-import { Organization, Prisma, User } from '@prisma/client'
+import { Prisma, User } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
-import { createSession } from './session'
+import { createSession, saveUserSession } from './session'
 import { getPresignedUrlWithClient } from './file'
 import { randomUUID } from 'crypto'
 import { createEmailNotification } from './notifications'
+import { getAuthForOperation } from './auth'
+
+export async function getUserByEmail(email: string) {
+    const user = await prisma.user.findUnique({
+        where: {
+            email: email
+        },
+        select: {
+            user_id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone: true,
+            image: true,
+            organizations: {
+                select: {
+                    organization_id: true,
+                    role: true,
+                    organization: {
+                        select: {
+                            name: true,
+                            short_name: true,
+                            organization_type: true,
+                            logo: true,
+                            domain: true,
+                            email: true,
+                            phone: true,
+                            leagues: {
+                                select: {
+                                    league_id: true,
+                                    name: true,
+                                    start_date: true,
+                                    end_date: true,
+                                    matches: {
+                                        select: {
+                                            match_id: true,
+                                            opponent: true,
+                                            match_date: true,
+                                            home_or_away: true,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            team_members: {
+                select: {
+                    organization_id: true,
+                    team_id: true,
+                    role: true,
+                    team: {
+                        select: {
+                            name: true,
+                            age_group: true,
+                            division: true,
+                        }
+                    }
+                }
+            }
+        }
+    })
+    return user
+}
 
 export async function inviteUser(payload: User & { imageUrl?: string; organization_id: string; team_id?: string; team_name?: string; player_id?: string; role: string }) {
-    const cookieJar = await cookies()
-    const created_by = cookieJar.get('user_id')?.value
+    const auth = await getAuthForOperation()
+    const created_by = auth?.user_id
     let passwd: string | undefined = undefined
-    if (!created_by) {
-        console.error('Unable to invite user because user_id cookie is missing')
-        return
-    }
-    const session = await createSession(created_by)
-    if (!session?.user?.first_name) {
-        console.error('Unable to invite user because session does not have a first_name')
-        return
-    }
+
     let TemplateId = 39188601
 
     let user = await prisma.user.findUnique({
@@ -113,7 +170,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         })
     }
 
-    if (user && organization_id && session.user?.email) {
+    if (user && organization_id && auth.email) {
         const {
             organizations,
             team_members,
@@ -163,8 +220,8 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         if (TemplateId) {
             await createEmailNotification({
                 sender: {
-                    email: session.user.email,
-                    name: [session.user.first_name, session.user.last_name].join(' '),
+                    email: auth.email,
+                    name: [auth.first_name, auth.last_name].join(' '),
                 },
                 receiver: {
                     email: payload.email,
@@ -172,7 +229,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
                 },
                 TemplateId,
                 TemplateModel: {
-                    sender: session.user.first_name,
+                    sender: auth.first_name,
                     name: payload.first_name,
                     player: "your child's",
                     team: payload.team_name || "team",

@@ -1,3 +1,4 @@
+export const TEAM_INVITATION_TEMPLATE = 39203872
 export async function createEmailNotification({
     sender,
     receiver,

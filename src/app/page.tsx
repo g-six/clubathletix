@@ -3,18 +3,22 @@ import { Heading, Subheading } from '@/components/heading'
 import { CreateOrganizationForm } from '@/components/organizations/organization.form'
 import { Select } from '@/components/select'
 import { getOrganizationsByUserId } from '@/models/organization'
-import { cookies } from 'next/headers'
+
+import { auth } from '@/auth'
 
 export default async function Home() {
-  const cookieStore = await cookies()
-  let ogranizations = await getOrganizationsByUserId(cookieStore.get('session_id')?.value || '')
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    return <div>Please sign in</div>
+  }
+  let ogranizations = await getOrganizationsByUserId(session.user.id)
 
   if (!ogranizations.length) return <CreateOrganizationForm />
   return (
     <>
       <Heading>
         Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
-        {cookieStore.get('first_name')?.value}
       </Heading>
       <div className="mt-8 flex items-end justify-between">
         <Subheading>Overview</Subheading>

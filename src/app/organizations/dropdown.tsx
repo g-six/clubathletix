@@ -9,42 +9,55 @@ import {
   DropdownMenu,
 } from '@/components/dropdown'
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
-import { setActiveOrganization } from '@/services/organization.service'
+import useLocalStorage from '@/lib/useLocalStorage.hook'
 import { ChevronDownIcon, Cog8ToothIcon, UserGroupIcon } from '@heroicons/react/16/solid'
 import cookieJar from 'js-cookie'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 export function OrganizationDropdown({
   data,
+  user,
 }: {
   data: {
     organization_id: string
     name: string
     role: string
     organization: {
-      logo: string
+      logo?: string
     }
   }[]
+  user: {
+    [k: string]: string
+  }
 }) {
+  useLocalStorage('user', user)
+  useLocalStorage('organizations', data)
   const params = useParams()
+  const path = usePathname()
+
   const [organization, setOrganization] = useState(data.find((org) => org.organization_id === params.organization_id))
 
   const activateOrganization = useCallback(async (organization_id: string) => {
-    const x = await setActiveOrganization(organization_id)
-    if (x.userOrganization?.role) {
+    const chosen = data.find((org) => org.organization_id === organization_id)
+    if (chosen?.role) {
+      cookieJar.set('organization_id', organization_id)
       location.href = `/organizations/${organization_id}`
     }
   }, [])
 
   useEffect(() => {
-    if (organization?.organization_id && params.organization_id !== organization?.organization_id) {
+    if (
+      params.organization_id &&
+      organization?.organization_id &&
+      params.organization_id !== organization?.organization_id
+    ) {
       activateOrganization(organization.organization_id)
     }
   }, [organization])
 
   useEffect(() => {
-    if (!params.organization_id && data.length) {
-      location.href = `/organizations/${data[0].organization_id}`
+    if (!path.startsWith('/match-control/') && !params.organization_id && data.length) {
+      location.href = `/organizations/${cookieJar.get('organization_id') || data[0].organization_id}`
     }
   }, [])
 

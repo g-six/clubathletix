@@ -1,31 +1,14 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getOrganization } from './models/organization'
+import { auth } from "@/auth"
 
-export async function middleware(request: NextRequest) {
-    const path = request.nextUrl.pathname
-    // Get the token from the cookies
-    const token = request.cookies.get('session_token')?.value || ''
-    const session = request.cookies.get('session_id')?.value || ''
-    // If trying to access a public path while logged in, redirect to dashboard
-
-    if (path.startsWith('/logout') && token) {
-        request.cookies.clear()
-        return NextResponse.redirect(new URL('/login', request.url))
+export default auth((req) => {
+    if (!req.auth && !isIgnoredPath(req.nextUrl.pathname)) {
+        const newUrl = new URL("/login", req.nextUrl.origin)
+        return Response.redirect(newUrl)
     }
 
-    if (!token && !session) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
+})
 
-    return NextResponse.next()
-}
-export const config = {
-    matcher: [
-        // Apply middleware to specific routes
-        '/dashboard',
-        '/organizations/:path*',
-        '/members/:path*',
-    ]
+function isIgnoredPath(path: string): boolean {
+    return path.startsWith("/match-control/") || path.startsWith("/_") || path.startsWith("/login") || path.startsWith("/api/") || /\.(png|jpg|jpeg|gif|svg|ico)$/.test(path)
 }
 

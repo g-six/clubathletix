@@ -1,4 +1,7 @@
 'use client'
+import { authenticate } from '@/lib/auth-actions'
+import { useSearchParams } from 'next/navigation'
+import { useActionState } from 'react'
 
 import { Alert } from '@/components/alert'
 import { Button } from '@/components/button'
@@ -11,7 +14,7 @@ import { Text } from '@/components/text'
 import Logo from '@/images/logos/mustang.png'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { FormEvent, useState } from 'react'
+import { useState } from 'react'
 // import { Address } from './address'
 function isValidEmail(email: string) {
   const re =
@@ -20,50 +23,55 @@ function isValidEmail(email: string) {
 }
 
 export default function Login() {
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+  const [errorMessage, formAction, isLoading] = useActionState(authenticate, undefined)
+
   const pathname = usePathname()
-  const [isLoading, setLoading] = useState(false)
+  // const [isLoading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
 
   if (pathname === '/') location.href = '/login'
   return (
     <form
-      method="post"
+      action={formAction}
       className="mx-auto max-w-2xl"
-      onSubmit={(evt: FormEvent<HTMLFormElement>) => {
-        evt.preventDefault()
-        setLoading(true)
-        const form = evt.currentTarget
-        const elements = form.elements as typeof form.elements & {
-          [k: string]: HTMLInputElement
-        }
-        const payload = {
-          email: elements.email.value,
-          password: elements.password.value,
-        }
-        fetch('/api/login', {
-          headers: {
-            contentType: 'application/json',
-          },
-          body: JSON.stringify(payload),
-          method: 'POST',
-        })
-          .then((res) => {
-            res.json().then((data) => {
-              if (data.session_id) {
-                if (data.organization_id) {
-                  location.href = `/organizations/${data.organization_id}`
-                } else location.href = '/dashboard'
-              } else {
-                setError('Invalid email or password')
-              }
-            })
-          })
-          .finally(() => {
-            setLoading(false)
-          })
-      }}
+      // onSubmit={(evt: FormEvent<HTMLFormElement>) => {
+      //   evt.preventDefault()
+      //   setLoading(true)
+      //   const form = evt.currentTarget
+      //   const elements = form.elements as typeof form.elements & {
+      //     [k: string]: HTMLInputElement
+      //   }
+      //   const payload = {
+      //     email: elements.email.value,
+      //     password: elements.password.value,
+      //   }
+      //   fetch('/api/login', {
+      //     headers: {
+      //       contentType: 'application/json',
+      //     },
+      //     body: JSON.stringify(payload),
+      //     method: 'POST',
+      //   })
+      //     .then((res) => {
+      //       res.json().then((data) => {
+      //         if (data.session_id) {
+      //           if (data.organization_id) {
+      //             location.href = `/organizations/${data.organization_id}`
+      //           } else location.href = '/dashboard'
+      //         } else {
+      //           setError('Invalid email or password')
+      //         }
+      //       })
+      //     })
+      //     .finally(() => {
+      //       setLoading(false)
+      //     })
+      // }}
     >
+      <input type="hidden" name="redirectTo" value={callbackUrl} />
       <Heading className="text-center">
         <Image
           src={Logo}
@@ -77,10 +85,17 @@ export default function Login() {
       <Divider className="my-10 mt-6" />
 
       <section className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
-        <div className="space-y-1">
-          <Subheading>Email</Subheading>
-          <Text>Enter the email address used to sign-up for ClubAthletix.</Text>
-        </div>
+        {errorMessage ? (
+          <div>
+            <Heading>Error</Heading>
+            <p>{errorMessage}</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <Subheading>Email</Subheading>
+            <Text>Enter the email address used to sign-up for ClubAthletix.</Text>
+          </div>
+        )}
         <div className="space-y-4 lg:col-span-2">
           <Input
             type="email"
@@ -137,9 +152,7 @@ export default function Login() {
                 method: 'POST',
               })
                 .then((res) => {
-                  res.json().then((data) => {
-                    console.log(data)
-                  })
+                  res.json().then((data) => {})
                 })
                 .finally(() => {
                   setLoading(false)

@@ -1,16 +1,17 @@
-import { createMatch } from '@/models/match'
+import { createMatch, getMatch } from '@/models/match'
 import { createSession } from '@/models/session'
 import { prisma } from '@/prisma'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ match_id: string }> }) {
-    const cookieStore = await cookies()
-    let session = await createSession(cookieStore.get('user_id')?.value || '')
     const { match_id } = await params
+    const match = await getMatch(match_id)
     return Response.json({
         match_id,
-        session,
+        ...match
+    }, {
+        status: match ? 200 : 404
     })
 }
 

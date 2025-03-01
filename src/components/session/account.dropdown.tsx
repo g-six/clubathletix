@@ -1,18 +1,13 @@
-'use client'
-
-import { signOut } from '@/services/session.service'
+import { signOut } from '@/auth'
 import {
   ArrowRightStartOnRectangleIcon,
   LightBulbIcon,
   ShieldCheckIcon,
   UserCircleIcon,
 } from '@heroicons/react/16/solid'
-import { useState } from 'react'
 import { DropdownDivider, DropdownItem, DropdownLabel, DropdownMenu } from '../dropdown'
-import Spinner from '../spinner'
 
 export function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
-  const [isLoading, setIsLoading] = useState(false)
   return (
     <DropdownMenu className="min-w-64" anchor={anchor}>
       <DropdownItem href="#">
@@ -30,16 +25,16 @@ export function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom 
       </DropdownItem>
       <DropdownDivider />
       <DropdownItem
-        onClick={() => {
-          setIsLoading(true)
-          signOut().finally(() => {
-            setIsLoading(false)
-            location.href = `/login`
+        action={async () => {
+          'use server'
+          console.log('signing out')
+          await signOut({
+            redirectTo: '/login',
           })
         }}
       >
         <ArrowRightStartOnRectangleIcon />
-        <DropdownLabel>Sign out {isLoading && <Spinner />}</DropdownLabel>
+        <DropdownLabel>Sign out</DropdownLabel>
       </DropdownItem>
     </DropdownMenu>
   )

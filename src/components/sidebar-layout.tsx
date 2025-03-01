@@ -1,6 +1,7 @@
 'use client'
 
 import * as Headless from '@headlessui/react'
+import { usePathname } from 'next/navigation'
 import React, { useState } from 'react'
 import { NavbarItem } from './navbar'
 
@@ -49,6 +50,8 @@ export function SidebarLayout({
   sidebar,
   children,
 }: React.PropsWithChildren<{ navbar: React.ReactNode; sidebar: React.ReactNode }>) {
+  const pathname = usePathname()
+  if (pathname.startsWith('/match-control/')) return <div className="mx-auto max-w-6xl">{children}</div>
   let [showSidebar, setShowSidebar] = useState(false)
 
   return (

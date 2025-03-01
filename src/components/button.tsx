@@ -50,7 +50,7 @@ const styles = {
   ],
   skeleton: [
     // Base
-    '!text-xs !p-0 border-transparent text-zinc-950 data-active:underline data-hover:underline',
+    '!text-xs flex items-center !p-0 border-transparent text-zinc-950 data-active:underline data-hover:underline',
     // Dark mode
     'dark:text-white dark:data-active:bg-none dark:data-hover:underline',
     // Icon

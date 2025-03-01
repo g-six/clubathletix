@@ -1,10 +1,17 @@
 import { Stat } from '@/app/stat'
 import { Avatar } from '@/components/avatar'
+import { Button } from '@/components/button'
+import { Field, Label } from '@/components/fieldset'
 import { Heading } from '@/components/heading'
+import { Input } from '@/components/input'
 import { InviteMemberDialog } from '@/components/organizations/member.dialog'
-import { CreatePlayerDialog } from '@/components/organizations/player.dialog'
+import { CreatePlayerDialog, FindPlayerDialog } from '@/components/organizations/player.dialog'
+import { PhotoUploader } from '@/components/photo-uploader'
+import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { getOrganization, Player } from '@/models/organization'
+import { updateTeam } from '@/models/team'
+import { EllipsisVerticalIcon } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
 import { getTeam } from '../actions'
 import { TeamDropdown } from '../dropdown'
@@ -29,6 +36,52 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
           <Stat title="Clean sheets" value="12" change="+4.5%" />
           <Stat title="Fouls" value="22" change="+21.2%" />
         </div>
+      </div>
+      <div className="mt-24 flex flex-col justify-between gap-4">
+        <Heading>Team information</Heading>
+        <form
+          className="flex flex-col items-end gap-4"
+          action={async (formData) => {
+            'use server'
+            updateTeam(formData).then(console.log).catch(console.error)
+          }}
+        >
+          <input type="hidden" name="team_id" value={team?.team_id} />
+          <div className="mt-2 grid w-full grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-3 xl:grid-cols-6">
+            <div className="pt-1 xl:col-span-1">
+              <div className="w-full">
+                <PhotoUploader name="logo" data-default={team?.logo} />
+              </div>
+            </div>
+            <Field className="xl:col-span-3">
+              <Label>Name</Label>
+              <Input name="name" defaultValue={team?.name} />
+            </Field>
+            <Field className="xl:col-span-1">
+              <Label>Age Group</Label>
+              <Select name="age_group" defaultValue={team?.age_group}>
+                {Array.from({ length: 15 }, (_, i) => i + 7).map((x) => (
+                  <option value={`U${x}`} key={`U${x}`}>{`U${x}`}</option>
+                ))}
+                <option value="adult">Adult</option>
+              </Select>
+            </Field>
+            <Field className="xl:col-span-1">
+              <Label>Division</Label>
+              <Select name="division" defaultValue={team?.division}>
+                <option value="PL">PL</option>
+                <option value="1">1</option>
+                <option value="1A">1A</option>
+                <option value="1B">1B</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </Select>
+            </Field>
+          </div>
+          <div>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
       </div>
       <div className="my-12" />
       <div className="mt-24 flex justify-between">
@@ -70,9 +123,12 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
 
       <div className="mt-24 flex justify-between">
         <Heading>Players</Heading>
-        <CreatePlayerDialog team-id={team_id} members={team?.members || []}>
-          Add player
-        </CreatePlayerDialog>
+        <div className="flex gap-4">
+          <FindPlayerDialog team-id={team_id}>Add an existing player</FindPlayerDialog>
+          <CreatePlayerDialog team-id={team_id} members={team?.members || []}>
+            Add player
+          </CreatePlayerDialog>
+        </div>
       </div>
       <Table className="mt-8 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
         <TableHead>
@@ -97,7 +153,11 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
               >
                 <TableCell>
                   <div className="flex items-center gap-4">
-                    <Avatar src={`/api/files/${record.player.photo}`} className="size-6" />
+                    {record.player.photo ? (
+                      <Avatar src={`/api/files/${record.player.photo}`} className="size-6" />
+                    ) : (
+                      <EllipsisVerticalIcon className="mx-1 size-4" />
+                    )}
                     {record.jersey_number}
                   </div>
                 </TableCell>

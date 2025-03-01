@@ -1,26 +1,28 @@
 import { prisma } from '@/prisma'
-import { Prisma } from '@prisma/client'
-import { cookies } from 'next/headers'
+import { MatchEvent, Prisma } from '@prisma/client'
+import { getAuthForOperation } from './auth'
 
 export async function createMatchEvent(payload: unknown) {
-    const cookieStore = await cookies()
-    const created_by = cookieStore.get('user_id')?.value
+    const session = await getAuthForOperation()
+    if (!session?.user_id) return
+
+    const created_by = session.user_id
     const {
         match_id,
         player_id,
         event_type,
-        event_time,
+        logged_at,
     } = payload as CreateMatchEvent
     const data = {
         match_id,
         player_id,
         event_type,
-        event_time,
+        logged_at,
         created_by,
-    }
+    } as unknown
     try {
         return await prisma.matchEvent.create({
-            data
+            data: data as Prisma.MatchEventCreateInput
         })
     } catch (error) {
         console.log('createMatchEvent error', JSON.stringify(data, null, 2))
@@ -64,6 +66,21 @@ export async function getMatchEvents(match_id: string) {
     } catch (error) {
         console.log(error)
         console.log('Error in models/match.ts:getMatch')
+    }
+}
+
+export async function updateMatchEvent(match_event_id: string, updates: Prisma.MatchEventUpdateInput) {
+    try {
+        const matchEvent = await prisma.matchEvent.update({
+            where: {
+                match_event_id,
+            },
+            data: updates
+        })
+
+        return matchEvent
+    } catch (error) {
+        console.log('Error in models/match.ts:updateMatchEvent')
     }
 }
 

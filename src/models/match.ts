@@ -1,5 +1,6 @@
 import { prisma } from '@/prisma'
-import { Prisma } from '@prisma/client'
+import { Match, Prisma } from '@prisma/client'
+import { getAuthForOperation } from './auth'
 
 export async function createMatch(payload: unknown) {
     const {
@@ -33,8 +34,26 @@ export async function createMatch(payload: unknown) {
     }
 }
 
+export async function updateMatch({ match_id, ...payload }: Match) {
+    if (!match_id) throw new Error('Missing match id')
+    if (!payload.updated_by) throw new Error('Missing updated by')
+    try {
+        return await prisma.match.update({
+            where: {
+                match_id,
+            },
+            data: payload
+        })
+    } catch (error) {
+        console.log(error)
+        console.log('error')
+    }
+}
+
 export async function getMatch(match_id: string) {
     try {
+        const session = await getAuthForOperation()
+        if (!session?.user_id) return
         return await prisma.match.findUnique({
             where: {
                 match_id,
@@ -45,6 +64,7 @@ export async function getMatch(match_id: string) {
                         name: true,
                         age_group: true,
                         division: true,
+                        logo: true,
                         players: {
                             select: {
                                 player_id: true,
@@ -57,7 +77,26 @@ export async function getMatch(match_id: string) {
                                     }
                                 }
                             }
-                        }
+                        },
+
+                        members: session.user_id ? {
+                            where: {
+                                user_id: session.user_id
+                            },
+                            select: {
+                                role: true,
+                                user_id: true,
+                                user: {
+                                    select: {
+                                        first_name: true,
+                                        last_name: true,
+                                        email: true,
+                                        phone: true,
+                                    }
+                                }
+
+                            }
+                        } : false,
                     }
                 },
                 events: {
@@ -66,7 +105,7 @@ export async function getMatch(match_id: string) {
                         event_type: true,
                         player_id: true,
                         video_url: true,
-                        event_minute: true,
+                        logged_at: true,
                     }
                 },
                 league: {
@@ -80,6 +119,20 @@ export async function getMatch(match_id: string) {
         console.log(error)
         console.log('Error in models/match.ts:getMatch')
     }
+}
+
+export async function getMatchesByOrganizationId(organization_id: string, limit = 3) {
+    const matches = await prisma.match.findMany({
+        where: {
+            organization_id,
+        },
+        take: limit,
+        orderBy: {
+            match_date: 'desc',
+        }
+    })
+
+    return matches
 }
 
 export type CreateMatch = Prisma.Args<typeof prisma.match, 'create'>['data']

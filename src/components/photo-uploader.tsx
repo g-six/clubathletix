@@ -5,11 +5,24 @@ import { onFileChange } from '@/lib/file-helper'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { useState } from 'react'
 
-export function PhotoUploader({ name, 'data-default': defaultValue }: { name: string; 'data-default'?: string }) {
+export function PhotoUploader({
+  name,
+  className,
+  'data-default': defaultValue,
+}: {
+  name: string
+  className?: string
+  'data-default'?: string | null
+}) {
   const [file, setFile] = useState<string | undefined>(defaultValue ? `/api/files/${defaultValue}` : undefined)
 
   return (
-    <div className="w-full rounded-lg bg-black/20 px-1 py-3 dark:border-r dark:border-b dark:border-white/15 dark:bg-black">
+    <div
+      className={
+        className ||
+        'w-full rounded-lg bg-black/20 px-1 py-3 dark:border-r dark:border-b dark:border-white/15 dark:bg-black'
+      }
+    >
       <input type="hidden" defaultValue={file} name={name} />
       <Field>
         <label

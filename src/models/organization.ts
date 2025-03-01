@@ -3,16 +3,7 @@ import { prisma } from '@/prisma'
 import { Prisma } from '@prisma/client'
 import { cookies } from 'next/headers'
 
-export async function getOrganizationsByUserId(session_id: string) {
-    if (!session_id) return []
-    const session = await prisma.session.findUnique({
-        where: {
-            session_id
-        },
-        include: {
-            user: true
-        }
-    })
+export async function getOrganizationsByUserId(user_id: string) {
 
     const userOrganizations: {
         organization_id: string
@@ -20,7 +11,7 @@ export async function getOrganizationsByUserId(session_id: string) {
         organization: unknown
     }[] = await prisma.userOrganization.findMany({
         where: {
-            user_id: session?.user?.user_id
+            user_id
         },
         include: {
             organization: true
