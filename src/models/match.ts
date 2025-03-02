@@ -106,6 +106,7 @@ export async function getMatch(match_id: string) {
                         player_id: true,
                         video_url: true,
                         logged_at: true,
+                        opponent_number: true,
                     }
                 },
                 league: {

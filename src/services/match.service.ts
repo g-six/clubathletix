@@ -49,7 +49,7 @@ export async function createMatchEvent(payload: unknown) {
     const {
         match_id,
         side,
-        jersey_number,
+        opponent_number,
         player_id,
         event,
         assist,
@@ -65,7 +65,7 @@ export async function createMatchEvent(payload: unknown) {
                 body: JSON.stringify({
                     logged_at,
                     side,
-                    jersey_number,
+                    opponent_number,
                     player_id,
                     assist
                 })
@@ -200,6 +200,7 @@ export type MatchRecord = Match & {
     }
     events: (CreateMatchEvent & {
         player: Player
+        opponent_number?: string
     })[]
 }
 export type CreateMatchEvent = Prisma.Args<typeof prisma.matchEvent, 'create'>['data']

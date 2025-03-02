@@ -12,12 +12,14 @@ export async function createMatchEvent(payload: unknown) {
         player_id,
         event_type,
         logged_at,
+        opponent_number,
     } = payload as CreateMatchEvent
     const data = {
         match_id,
         player_id,
         event_type,
         logged_at,
+        opponent_number,
         created_by,
     } as unknown
     try {

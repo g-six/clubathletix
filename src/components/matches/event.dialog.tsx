@@ -71,32 +71,32 @@ export function EventDialog(
 
   for (let i = 0; i < Number(props.match.goals_against || 0); i++) {
     goals.push({
-      jersey_number: undefined,
+      opponent_number: undefined,
       side: props.match.home_or_away === 'home' ? 'away' : 'home',
     })
   }
   const [events, setEvents] = useState<{
     goals: {
-      jersey_number?: string
+      opponent_number?: string
       player_id?: string
       assist?: {
-        jersey_number?: string
+        opponent_number?: string
         player_id?: string
       }
       side: 'home' | 'away'
     }[]
     yellow_cards: {
-      jersey_number?: string
+      opponent_number?: string
       player_id?: string
       side: 'home' | 'away'
     }[]
     red_cards: {
-      jersey_number?: string
+      opponent_number?: string
       player_id?: string
       side: 'home' | 'away'
     }[]
     saves: {
-      jersey_number?: string
+      opponent_number?: string
       player_id?: string
       side: 'home' | 'away'
     }[]
@@ -247,14 +247,14 @@ export function EventDialog(
                 </Listbox>
               ) : (
                 <Input
-                  name="jersey_number"
+                  name="opponent_number"
                   disabled={isLoading}
                   placeholder="00"
-                  invalid={!payload.jersey_number}
+                  invalid={!payload.opponent_number}
                   onChange={(evt) => {
                     setPayload({
                       ...payload,
-                      jersey_number: evt.currentTarget.value,
+                      opponent_number: evt.currentTarget.value,
                     })
                   }}
                   autoFocus
@@ -277,24 +277,26 @@ export function EventDialog(
           <Button
             className="flex items-center gap-2"
             onClick={() => {
-              if (props.event === 'yellow_card' && payload.jersey_number) {
+              if (props.event === 'yellow_card' && payload.opponent_number) {
                 setEvents((prev) => ({
                   ...prev,
                   yellow_cards: [
                     ...(prev.yellow_cards || []),
                     {
-                      jersey_number: payload.jersey_number as string,
+                      player_id: payload.player_id ? (payload.player_id as string) : undefined,
+                      opponent_number: payload.opponent_number as string,
                       side: sideClicked as 'home' | 'away',
                     },
                   ],
                 }))
-              } else if (props.event === 'red_card' && payload.jersey_number) {
+              } else if (props.event === 'red_card' && payload.opponent_number) {
                 setEvents((prev) => ({
                   ...prev,
                   red_cards: [
                     ...(prev.red_cards || []),
                     {
-                      jersey_number: payload.jersey_number as string,
+                      player_id: payload.player_id ? (payload.player_id as string) : undefined,
+                      opponent_number: payload.opponent_number as string,
                       side: sideClicked as 'home' | 'away',
                     },
                   ],
@@ -306,7 +308,7 @@ export function EventDialog(
                     ...(prev.goals || []),
                     {
                       player_id: payload.player_id ? (payload.player_id as string) : undefined,
-                      jersey_number: payload.jersey_number ? (payload.jersey_number as string) : undefined,
+                      opponent_number: payload.opponent_number ? (payload.opponent_number as string) : undefined,
                       side: (side || sideClicked) as 'home' | 'away',
                     },
                   ],

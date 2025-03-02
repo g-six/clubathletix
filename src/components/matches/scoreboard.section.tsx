@@ -118,42 +118,41 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
       </div>
       <div className="mt-6 flex justify-center gap-4 text-center">
         <section className="flex w-1/2 flex-col gap-1 text-right">
-          {match.home_or_away === 'home' &&
-            events
-              .filter((me) => me.logged_at)
-              .map((matchEvent) => (
-                <EventRow
-                  key={[
-                    matchEvent.player_id || matchEvent.player.jersey_number || '',
-                    matchEvent.event_type,
-                    matchEvent.logged_at,
-                  ]
-                    .map(Boolean)
-                    .join('-')}
-                  name={matchEvent.player.first_name || `${match.opponent} player`}
-                  at={matchEvent.logged_at || ''}
-                  video-url={matchEvent.video_url}
-                  match={match}
-                  match-event-id={matchEvent.match_event_id as string}
-                  event={matchEvent.event_type as 'goal' | 'yellow_card' | 'red_card'}
-                />
-              ))}
+          {events
+            .filter((me) => me.logged_at && (match.home_or_away === 'home' ? me.player_id : me.opponent_number))
+            .map((matchEvent) => (
+              <EventRow
+                key={[
+                  matchEvent.player_id || matchEvent.player.jersey_number || '',
+                  matchEvent.event_type,
+                  matchEvent.logged_at,
+                ]
+                  .map(Boolean)
+                  .join('-')}
+                name={matchEvent.player.first_name || `${match.opponent} #${matchEvent.opponent_number}`}
+                at={matchEvent.logged_at || ''}
+                video-url={matchEvent.video_url}
+                match={match}
+                match-event-id={matchEvent.match_event_id as string}
+                event={matchEvent.event_type as 'goal' | 'yellow_card' | 'red_card'}
+              />
+            ))}
         </section>
         <section className="flex w-1/2 flex-col gap-1 text-left">
           {match.home_or_away === 'away' &&
             events
-              .filter((me) => me.logged_at)
+              .filter((me) => me.logged_at && (match.home_or_away === 'away' ? me.player_id : me.opponent_number))
               .map((matchEvent) => (
                 <EventRow
                   key={[
-                    matchEvent.player_id || matchEvent.player.jersey_number || '',
+                    matchEvent.player_id || matchEvent.opponent_number || '',
                     matchEvent.event_type,
                     matchEvent.logged_at,
                   ]
                     .filter(Boolean)
                     .join('-')}
                   match-event-id={matchEvent.match_event_id as string}
-                  name={matchEvent.player.first_name || `${match.team.name} player`}
+                  name={matchEvent.player.first_name || `${match.opponent} #${matchEvent.opponent_number}`}
                   at={matchEvent.logged_at || ''}
                   video-url={matchEvent.video_url}
                   match={match}
