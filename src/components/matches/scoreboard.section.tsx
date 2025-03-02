@@ -95,8 +95,7 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
           <div className="mb-2 text-xs font-bold lg:text-xs">{homeSide.team}</div>
         </section>
         <section>
-          {Boolean(teamAdmin) && <GameActionButton match={match} />}
-          <p className="mt-2 font-mono text-sm font-black">{timeElapsed === '0' ? '--:--' : timeElapsed}</p>
+          <GameActionButton match={match} write-mode={Boolean(teamAdmin)} />
         </section>
         <section className="flex w-1/5 flex-col gap-2 sm:w-2/5">
           <div className="mx-auto w-full overflow-hidden rounded-full">
@@ -299,7 +298,9 @@ function EventRow({
   )
 }
 
-function GameActionButton({ match }: { match: MatchRecord }) {
+function GameActionButton(props: { match: MatchRecord; 'write-mode': boolean }) {
+  let [timeElapsed, setTimeElapsed] = useState<string>('0')
+  const [match, setMatch] = useState(props.match)
   let [buttonLabel, setButtonLabel] = useState<
     'start match' | 'end 1st half' | 'end 2nd half' | 'start 2nd half' | 'end match'
   >('start match')
@@ -313,13 +314,43 @@ function GameActionButton({ match }: { match: MatchRecord }) {
       setButtonLabel('end 2nd half')
     }
   }
+
+  function updateInterval() {
+    let num = 0
+    let pad = 0
+    if (match.fh_start && match.fh_end && match.sh_start && !Boolean(match.sh_end)) {
+      pad = match.regular_length || 0
+      num = Date.now() - new Date(match.sh_start).getTime()
+    } else if (match.fh_start && !Boolean(match.fh_end)) num = Date.now() - new Date(match.fh_start).getTime()
+    else if (match.fh_end && !Boolean(match.sh_start)) {
+      if (match.sizing === 'halves') num = (match.regular_length || 0) * 60000
+    } else if (match.sh_start && match.sh_end) {
+      if (match.sizing === 'halves') num = (match.regular_length || 0) * 120000
+    }
+
+    const minutes = Math.floor(num / 60000) + pad
+    const seconds = Math.floor(num / 1000) % 60
+    setTimeElapsed(`${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`)
+  }
+
   useEffect(() => {
+    if (match.fh_end && match.sh_end && !match.otfh_start) return
+
+    const intervalId = setInterval(() => {
+      updateInterval()
+    }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [timeElapsed])
+
+  useEffect(() => {
+    updateInterval()
     updateLabel()
-  }, [])
+  }, [match])
 
   return (
     <section className="flex-1 text-xs font-bold">
-      {match.result === 'pending' ? (
+      {props['write-mode'] && match.result === 'pending' ? (
         <>
           <Button
             type="button"
@@ -332,6 +363,8 @@ function GameActionButton({ match }: { match: MatchRecord }) {
                     new Date().toISOString(),
                     buttonLabel.toLowerCase() as 'start match' | 'start 2nd half'
                   )
+                    .then(setMatch)
+                    .finally(updateLabel)
                   break
                 case 'end 1st half':
                 case 'end 2nd half':
@@ -341,6 +374,8 @@ function GameActionButton({ match }: { match: MatchRecord }) {
                     new Date().toISOString(),
                     buttonLabel.toLowerCase() as 'end 1st half' | 'end 2nd half' | 'end match'
                   )
+                    .then(setMatch)
+                    .finally(updateLabel)
               }
             }}
             className="!text-xs capitalize sm:!text-sm"
@@ -351,6 +386,7 @@ function GameActionButton({ match }: { match: MatchRecord }) {
       ) : (
         <Subheading className="capitalize">{match.result}</Subheading>
       )}
+      <p className="mt-2 font-mono text-sm font-black">{timeElapsed === '0' ? '--:--' : timeElapsed}</p>
     </section>
   )
 }

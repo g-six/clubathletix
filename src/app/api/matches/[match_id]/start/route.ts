@@ -34,7 +34,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                     updated_by,
                 } as Match)
                 return Response.json({
-                    match
+                    ...match,
+                    ...part_to_update as unknown as Match,
                 })
             }
         }

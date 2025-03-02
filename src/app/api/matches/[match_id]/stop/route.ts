@@ -31,10 +31,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                         match_id,
                         updated_by,
                     } as Match)
+                    return Response.json({
+                        ...match,
+                        ...part_to_update as unknown as Match,
+                    })
                 }
-                return Response.json({
-                    match
-                })
+                return Response.json(match)
             }
         }
         return Response.json({
@@ -42,12 +44,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }, {
             status: 401
         })
-    }
-    // const match = await createMatchEvent({
-    //     match_id,
-    //     event_type: 'goal',
-    //     ...payload,
-    // })
+    } \
     return Response.json({
         message: 'Match failed to start due to invalid criteria'
     }, {

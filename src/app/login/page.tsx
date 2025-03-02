@@ -10,6 +10,7 @@ import { Divider } from '@/components/divider'
 import { Label } from '@/components/fieldset'
 import { Heading, Subheading } from '@/components/heading'
 import { Input } from '@/components/input'
+import Spinner from '@/components/spinner'
 import { Text } from '@/components/text'
 import Logo from '@/images/logos/mustang.png'
 import Image from 'next/image'
@@ -26,12 +27,11 @@ export default function Login() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
   const [errorMessage, formAction, isLoading] = useActionState(authenticate, undefined)
-
   const pathname = usePathname()
   // const [isLoading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [email, setEmail] = useState('')
-
+  const [resetMessage, setResetMessage] = useState('Click here to request a password reset email')
   if (pathname === '/') location.href = '/login'
   return (
     <form
@@ -142,8 +142,6 @@ export default function Login() {
             type="button"
             plain
             onClick={() => {
-              setLoading(true)
-
               fetch('/api/reset-password', {
                 headers: {
                   contentType: 'application/json',
@@ -155,15 +153,15 @@ export default function Login() {
                   res.json().then((data) => {})
                 })
                 .finally(() => {
-                  setLoading(false)
+                  setResetMessage('Check your inbox for instructions')
                 })
             }}
           >
-            Click here to request a password reset email
+            {resetMessage}
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>
-          Login
+          {isLoading && <Spinner />} Login
         </Button>
       </div>
       <Alert
