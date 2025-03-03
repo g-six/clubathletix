@@ -2,6 +2,7 @@
 import SpinningSoccer from '@/images/soccer.gif'
 import { createMatchEvent, MatchRecord, startMatch, stopMatch } from '@/services/match.service'
 import { PauseCircleIcon, PlayCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
+import { MatchEvent, Player } from '@prisma/client'
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../button'
@@ -11,6 +12,13 @@ import { Subheading } from '../heading'
 import { VideoUploader } from '../video-uploader'
 import { EventDialog } from './event.dialog'
 
+type MatchEventWithPlayer = MatchEvent & {
+  opponent_number: string
+  player: Player & {
+    first_name: string
+    last_name: string
+  }
+}
 export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
   const homeSide = {
     score: match.home_or_away === 'home' ? match.goals_for : match.goals_against,
@@ -23,19 +31,21 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
 
   const teamAdmin = match.team?.members?.find((member) => member.role !== 'parent')
 
-  const events = match.events.map((matchEvent) => {
-    const player = match.team.players.find((player) => matchEvent.player_id === player.player_id)
+  const [events, setEvents] = useState<MatchEventWithPlayer[]>(
+    match.events.map((matchEvent) => {
+      const player = match.team.players.find((player) => matchEvent.player_id === player.player_id)
 
-    return {
-      ...matchEvent,
-      player: {
-        ...player,
-        first_name: player?.player.first_name,
-        last_name: player?.player.last_name,
-        player: undefined,
-      },
-    }
-  })
+      return {
+        ...matchEvent,
+        player: {
+          ...player,
+          first_name: player?.player.first_name,
+          last_name: player?.player.last_name,
+          player: undefined,
+        },
+      } as unknown as MatchEventWithPlayer
+    })
+  )
 
   let [timeElapsed, setTimeElapsed] = useState<string>('0')
 
@@ -123,7 +133,7 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
             .map((matchEvent) => (
               <EventRow
                 key={[
-                  matchEvent.player_id || matchEvent.player.jersey_number || '',
+                  matchEvent.player_id || matchEvent.opponent_number || '',
                   matchEvent.event_type,
                   matchEvent.logged_at,
                 ]
