@@ -1,8 +1,25 @@
-export default function Spinner(props: { simple?: boolean }) {
+export default function Spinner(props: { simple?: boolean; size?: string }) {
+  function getSize() {
+    switch (props.size) {
+      case 'xs':
+        return '6'
+      case 'sm':
+        return '8'
+      case 'md':
+        return '12'
+      case 'lg':
+        return '24'
+      case 'xl':
+      default:
+        return '32'
+    }
+  }
   return (
-    <div className="flex h-screen items-center justify-center">
+    <div className={props.simple ? 'inline-block' : 'flex h-screen items-center justify-center'}>
       {props.simple ? (
-        <div className="h-32 w-32 animate-spin rounded-full border-t-4 border-b-4 border-gray-900 dark:border-white"></div>
+        <div
+          className={`h-${getSize()} w-${getSize()} animate-spin rounded-full border-t-4 border-b-4 border-gray-900 dark:border-white`}
+        ></div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-y-4">
           <div className="relative h-14 w-14 overflow-hidden rounded-full border border-gray-600 bg-white shadow">

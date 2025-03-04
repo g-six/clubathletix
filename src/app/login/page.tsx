@@ -158,7 +158,7 @@ export default function Login() {
                 })
             }}
           >
-            {resetMessage?.endsWith('...') && <Spinner />} {resetMessage}
+            {resetMessage?.endsWith('...') && <Spinner simple size="xs" />} {resetMessage}
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>
