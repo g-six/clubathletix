@@ -22,16 +22,13 @@ export default function MatchControlPage() {
       setErrorCode(res.status)
     }
     setMatch(res)
-    //   .catch((err) => {
-    //     console.log('err', err.message)
-    //     setErrorCode(404)
-    //   })
   }, [params.match_id])
 
   useEffect(() => {
     loadMatch()
   }, [])
 
+  console.log(errorCode)
   if (errorCode) notFound()
 
   return (

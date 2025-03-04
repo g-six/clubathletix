@@ -2,17 +2,17 @@ import { cookies } from 'next/headers'
 
 import { Badge } from '@/components/badge'
 import { Card } from '@/components/card'
-import { Heading, Subheading } from '@/components/heading'
+import { Subheading } from '@/components/heading'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { formatDateTime } from '@/lib/date-helper'
-import { getOrganization, TeamMember, User } from '@/models/organization'
+import { getMySessionAndOrganization, TeamMember, User } from '@/models/organization'
 import Link from 'next/link'
 import { MatchDialog } from './[team_id]/match.dialog'
 
 export default async function ScheduleIndexPage(props: { params: Promise<unknown> }) {
   const cookieStore = await cookies()
   const { organization_id } = (await props.params) as { organization_id: string }
-  const organization = await getOrganization(organization_id)
+  const organization = await getMySessionAndOrganization(organization_id)
 
   const teams: {
     team_id: string
@@ -47,10 +47,7 @@ export default async function ScheduleIndexPage(props: { params: Promise<unknown
   })
   return (
     <>
-      <Heading>
-        Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
-        {cookieStore.get('first_name')?.value}
-      </Heading>
+      <Greeting />
       <div className="mt-8 flex items-end justify-between">
         <Subheading>Overview</Subheading>
       </div>

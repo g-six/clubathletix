@@ -68,6 +68,9 @@ export async function getMySessionAndOrganization(organization_id: string, optio
             }
         }),
         prisma.team.findMany({
+            include: {
+                league: true
+            },
             where: {
                 organization_id
             }

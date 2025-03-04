@@ -1,13 +1,12 @@
 import { Stat } from '@/app/stat'
-import { Heading, Subheading } from '@/components/heading'
+import Greeting from '@/components/greeting'
+import { Subheading } from '@/components/heading'
 import { Select } from '@/components/select'
 
 export default async function Home() {
   return (
     <>
-      <Heading>
-        Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
-      </Heading>
+      <Greeting />
       <div className="mt-8 flex items-end justify-between">
         <Subheading>Overview</Subheading>
         <div>

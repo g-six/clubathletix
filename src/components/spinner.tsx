@@ -1,4 +1,4 @@
-export default function Spinner(props: { simple?: boolean; size?: string }) {
+export default function Spinner(props: { simple?: boolean; size?: string; label?: string }) {
   function getSize() {
     switch (props.size) {
       case 'xs':
@@ -25,7 +25,7 @@ export default function Spinner(props: { simple?: boolean; size?: string }) {
           <div className="relative h-14 w-14 overflow-hidden rounded-full border border-gray-600 bg-white shadow">
             <img src="/loaders/default.gif" alt="Loading" className="absolute -top-0 -left-0 h-16 w-16" />
           </div>
-          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-400">Loading...</p>
+          <p className="text-xs font-medium text-zinc-800 dark:text-zinc-400">{props.label || 'Loading...'}</p>
         </div>
       )}
     </div>

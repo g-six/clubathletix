@@ -8,7 +8,6 @@ import { getMember } from '@/data'
 import { BanknotesIcon, CalendarIcon, ChevronLeftIcon, CreditCardIcon } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { MatchDialog } from '../match.dialog'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   let order = await getMember(params.id)
@@ -56,11 +55,6 @@ export default async function Member({ params }: { params: { id: string } }) {
               <CalendarIcon className="size-4 shrink-0 fill-zinc-400 dark:fill-zinc-500" />
               <span>{order.date}</span>
             </span>
-          </div>
-          <div className="flex gap-4">
-            <MatchDialog outline amount={'1234.56'}>
-              Refund
-            </MatchDialog>
           </div>
         </div>
       </div>
