@@ -10,6 +10,7 @@ import {
 } from '@/components/dropdown'
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
 import useLocalStorage from '@/lib/useLocalStorage.hook'
+import { SessionUser } from '@/typings/user'
 import { ChevronDownIcon, Cog8ToothIcon, UserGroupIcon } from '@heroicons/react/16/solid'
 import cookieJar from 'js-cookie'
 import { useParams, usePathname } from 'next/navigation'
@@ -26,9 +27,7 @@ export function OrganizationDropdown({
       logo?: string
     }
   }[]
-  user: {
-    [k: string]: string
-  }
+  user: SessionUser
 }) {
   useLocalStorage('user', user)
   useLocalStorage('organizations', data)

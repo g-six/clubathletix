@@ -31,7 +31,6 @@ export function MatchDialog(
     home_or_away: 'home',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   })
-  console.log(payload)
   const months = [
     'January',
     'February',
@@ -60,7 +59,6 @@ export function MatchDialog(
 
   const handleSubmit = useCallback(async () => {
     toggleLoader(true)
-    console.log(payload)
     const match = await createMatch(payload)
     if (match?.created_at) location.reload()
 
@@ -222,9 +220,6 @@ export function MatchDialog(
                 </div>
               </FieldGroup>
             </DialogBody>
-            <div className="mt-4 w-full text-zinc-400">
-              <span className="text-xs/4">A notification will be sent to each player / parent / guardian.</span>
-            </div>
             <DialogActions>
               <Button
                 plain

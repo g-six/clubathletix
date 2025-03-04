@@ -1,14 +1,14 @@
 import { prisma } from '@/prisma'
 import { Prisma, User } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
-import { createSession, saveUserSession } from './session'
 import { getPresignedUrlWithClient } from './file'
 import { randomUUID } from 'crypto'
 import { createEmailNotification } from './notifications'
 import { getAuthForOperation } from './auth'
+import { SessionUser } from '@/typings/user'
 
-export async function getUserByEmail(email: string) {
+
+export async function getUserByEmail(email: string): Promise<SessionUser | null> {
     const user = await prisma.user.findUnique({
         where: {
             email: email
@@ -27,26 +27,20 @@ export async function getUserByEmail(email: string) {
                     organization: {
                         select: {
                             name: true,
-                            short_name: true,
-                            organization_type: true,
                             logo: true,
-                            domain: true,
+                            short_name: true,
                             email: true,
                             phone: true,
+                            contact_last_name: true,
+                            contact_first_name: true,
+                            domain: true,
                             leagues: {
                                 select: {
                                     league_id: true,
                                     name: true,
                                     start_date: true,
                                     end_date: true,
-                                    matches: {
-                                        select: {
-                                            match_id: true,
-                                            opponent: true,
-                                            match_date: true,
-                                            home_or_away: true,
-                                        }
-                                    }
+
                                 }
                             }
                         }
@@ -63,13 +57,34 @@ export async function getUserByEmail(email: string) {
                             name: true,
                             age_group: true,
                             division: true,
+                            logo: true,
+                            players: {
+                                select: {
+                                    position: true,
+                                    player: {
+                                        select: {
+                                            first_name: true,
+                                            last_name: true,
+                                        }
+                                    }
+                                }
+                            },
+                            matches: {
+                                select: {
+                                    match_id: true,
+                                    opponent: true,
+                                    match_date: true,
+                                    home_or_away: true,
+                                    league_id: true,
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     })
-    return user
+    return user as SessionUser
 }
 
 export async function inviteUser(payload: User & { imageUrl?: string; organization_id: string; team_id?: string; team_name?: string; player_id?: string; role: string }) {

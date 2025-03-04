@@ -2,6 +2,13 @@ import { getPresignedUrlWithClient } from '@/models/file'
 import { prisma } from '@/prisma'
 import { Prisma } from '@prisma/client'
 import { cookies } from 'next/headers'
+import { getAuthForOperation } from './auth'
+import { SessionOrganization } from '@/typings/organization'
+import { SessionTeam } from '@/typings/team'
+import { SessionMatch } from '@/typings/match'
+import { SessionPlayer } from '@/typings/player'
+import { SessionUser } from '@/typings/user'
+import { SesssionLeague } from '@/typings/league'
 
 export async function getOrganizationsByUserId(user_id: string) {
 
@@ -44,7 +51,7 @@ export async function getOrganizationsByUserId(user_id: string) {
     }))
 }
 
-export async function getOrganization(organization_id: string, options?: {
+export async function getMySessionAndOrganization(organization_id: string, options?: {
     players?: {
         take: number
         skip?: number
@@ -54,7 +61,7 @@ export async function getOrganization(organization_id: string, options?: {
         skip?: number
     }
 }) {
-    const [organization, teams, members, matches, leagues, players] = await Promise.all([
+    const [organization, teams, members, matches, leagues, players, session] = await Promise.all([
         prisma.organization.findUnique({
             where: {
                 organization_id
@@ -109,7 +116,8 @@ export async function getOrganization(organization_id: string, options?: {
             },
             take: options.players.take,
             skip: options.players.skip || 0,
-        }) : Promise.resolve([])
+        }) : Promise.resolve([]),
+        getAuthForOperation()
     ])
     return {
         ...organization,
@@ -124,6 +132,20 @@ export async function getOrganization(organization_id: string, options?: {
         matches,
         players,
         leagues,
+        session
+    } as SessionOrganization & {
+        teams: SessionTeam[]
+        members: {
+            team_member_id: string
+            user_id: string
+            team_id: string
+            role: string
+            user: Pick<User, 'first_name' | 'last_name' | 'email' | 'phone' | 'image'>
+        }[]
+        leagues: SesssionLeague[]
+        matches: SessionMatch[]
+        players: SessionPlayer[]
+        session: SessionUser
     }
 }
 

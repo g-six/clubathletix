@@ -142,6 +142,7 @@ export default function Login() {
             type="button"
             plain
             onClick={() => {
+              setResetMessage('Sending email...')
               fetch('/api/reset-password', {
                 headers: {
                   contentType: 'application/json',
@@ -157,7 +158,7 @@ export default function Login() {
                 })
             }}
           >
-            {resetMessage}
+            {resetMessage?.endsWith('...') && <Spinner />} {resetMessage}
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>

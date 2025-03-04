@@ -161,22 +161,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
             })
         }
         const mails = await Promise.all(receivers.map((receiver) => {
-            console.log(JSON.stringify({
-                sender: {
-                    name: user.first_name,
-                    email: user.email,
-                },
-                receiver,
-                TemplateId: TEAM_INVITATION_TEMPLATE,
-                TemplateModel: {
-                    sender: user.first_name,
-                    name: receiver.name,
-                    who: added?.player?.user?.first_name || 'you',
-                    track_who: added?.player?.user?.first_name ? 'your' : `${added?.player.first_name || 'your child'}'s`,
-                    team: team?.name || 'a team',
-                    domain: 'ClubAthletix',
-                }
-            }, null, 2))
             return createEmailNotification({
                 sender: {
                     name: user.first_name,

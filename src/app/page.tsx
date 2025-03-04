@@ -4,17 +4,17 @@ import { CreateOrganizationForm } from '@/components/organizations/organization.
 import { Select } from '@/components/select'
 import { getOrganizationsByUserId } from '@/models/organization'
 
-import { auth } from '@/auth'
+import { getAuthForOperation } from '@/models/auth'
 
 export default async function Home() {
-  const session = await auth()
+  const session = await getAuthForOperation()
 
-  if (!session?.user?.id) {
+  if (!session?.user_id) {
     return <div>Please sign in</div>
   }
-  let ogranizations = await getOrganizationsByUserId(session.user.id)
+  let organizations = await getOrganizationsByUserId(session.user_id)
 
-  if (!ogranizations.length) return <CreateOrganizationForm />
+  if (!organizations.length) return <CreateOrganizationForm />
   return (
     <>
       <Heading>
@@ -31,7 +31,7 @@ export default async function Home() {
           </Select>
         </div>
       </div>
-      <div className="mt-4 grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid hidden gap-8 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Total revenue" value="$2.6M" change="+4.5%" />
         <Stat title="Average order value" value="$455" change="-0.5%" />
         <Stat title="Tickets sold" value="5,888" change="+4.5%" />

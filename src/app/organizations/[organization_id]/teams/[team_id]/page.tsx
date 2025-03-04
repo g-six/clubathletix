@@ -9,7 +9,7 @@ import { CreatePlayerDialog, FindPlayerDialog } from '@/components/organizations
 import { PhotoUploader } from '@/components/photo-uploader'
 import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
-import { getOrganization, Player } from '@/models/organization'
+import { getMySessionAndOrganization, Player } from '@/models/organization'
 import { updateTeam } from '@/models/team'
 import { EllipsisVerticalIcon } from '@heroicons/react/16/solid'
 import type { Metadata } from 'next'
@@ -22,7 +22,10 @@ export const metadata: Metadata = {
 
 export default async function TeamPage(props: { params: Promise<unknown> }) {
   const { organization_id, team_id } = (await props.params) as { organization_id: string; team_id: string }
-  const [organization, team] = await Promise.all([getOrganization(organization_id), team_id ? getTeam(team_id) : null])
+  const [organization, team] = await Promise.all([
+    getMySessionAndOrganization(organization_id),
+    team_id ? getTeam(team_id) : null,
+  ])
 
   return (
     <>

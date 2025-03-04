@@ -11,32 +11,47 @@ import { InviteMemberDialog } from '@/components/organizations/member.dialog'
 import { CreateOrganizationForm } from '@/components/organizations/organization.form'
 import { TeamDialog } from '@/components/organizations/team.dialog'
 import { Select } from '@/components/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { formatDateTime } from '@/lib/date-helper'
-import { getOrganization } from '@/models/organization'
+import { getMySessionAndOrganization } from '@/models/organization'
 import { Prisma } from '@prisma/client'
 import Link from 'next/link'
 
 export default async function Home(props: { params: Promise<unknown> }) {
   const cookieStore = await cookies()
   const { organization_id } = (await props.params) as { organization_id: string }
-  const organization = await getOrganization(organization_id)
+  const my = await getMySessionAndOrganization(organization_id)
 
-  if (!organization?.organization_id) return <CreateOrganizationForm />
+  if (!my?.organization_id) return <CreateOrganizationForm />
 
-  const teams: Prisma.TeamUncheckedCreateInput[] = organization?.teams || []
-
-  let matches: Prisma.MatchUncheckedCreateInput[] = organization?.matches || []
-  let leagues: Prisma.LeagueUncheckedCreateInput[] = organization?.leagues || []
-  let members = organization?.members || []
+  const teams = my?.teams || []
+  let matches = my?.matches || []
+  let leagues = my?.leagues || []
+  let members = my?.members || []
   const managingRolesAt = members.filter((m) => ['owner', 'coach', 'assistant coach', 'team manager'].includes(m.role))
-  const manageableTeams = managingRolesAt.map((m) => teams.find((team) => team.team_id === m.team_id))
+  const manageableTeams = teams
+    .filter((team) =>
+      managingRolesAt.find((role) => {
+        return team.team_id === role.team_id && role.user_id === my.session.user_id
+      })
+    )
+    .map(({ name, division, age_group, team_id, logo }) => ({
+      name,
+      division,
+      age_group,
+      team_id,
+      logo,
+      role: managingRolesAt.find((role) => {
+        return team_id === role.team_id && role.user_id === my.session.user_id
+      }),
+    }))
 
   return (
     <>
       <Greeting />
-      <div className="mt-8 flex items-end justify-between">
-        <Subheading>{organization.name} Overview</Subheading>
+      <div className="mt-8 flex items-center justify-between">
+        <Subheading>
+          <span className="hidden sm:inline-block">{my.name}</span> Overview
+        </Subheading>
         <div>
           <Select name="period">
             <option value="last_week">Last week</option>
@@ -70,7 +85,7 @@ export default async function Home(props: { params: Promise<unknown> }) {
               {matches.map((match) => (
                 <Link
                   href={`/match-control/${match.match_id}`}
-                  className="group flex flex-wrap sm:gap-1"
+                  className="group flex flex-wrap gap-1"
                   key={match.match_id}
                 >
                   <span className="font-bold underline group-hover:text-lime-500">
@@ -98,7 +113,7 @@ export default async function Home(props: { params: Promise<unknown> }) {
               {matches.map((match) => (
                 <Link
                   href={`/organizations/${organization_id}/teams/${match.team_id}/matches/${match.match_id}`}
-                  className="group flex flex-wrap sm:gap-1"
+                  className="group flex flex-wrap gap-1"
                   key={match.match_id}
                 >
                   <span className="font-bold underline group-hover:text-lime-500">
@@ -266,7 +281,7 @@ export default async function Home(props: { params: Promise<unknown> }) {
             />
           )}
       </div>
-      <Subheading className="mt-14">Recent registrations</Subheading>
+      {/* <Subheading className="mt-14">Recent registrations</Subheading>
       <Table className="mt-4 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">
         <TableHead>
           <TableRow>
@@ -302,7 +317,7 @@ export default async function Home(props: { params: Promise<unknown> }) {
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+      </Table> */}
     </>
   )
 }
@@ -342,7 +357,7 @@ async function UserDashboard({
               {matches.map((match) => (
                 <Link
                   href={`/organizations/${match.organization_id}/teams/${match.team_id}/matches/${match.match_id}`}
-                  className="group flex flex-wrap sm:gap-1"
+                  className="group flex flex-wrap gap-1"
                   key={match.match_id}
                 >
                   <span className="font-bold underline group-hover:text-lime-500">
@@ -370,7 +385,7 @@ async function UserDashboard({
               {teams.map((rec) => (
                 <Link
                   href={`/organizations/${rec.organization_id}/teams/${rec.team_id}`}
-                  className="group flex flex-wrap sm:gap-1"
+                  className="group flex flex-wrap gap-1"
                   key={rec.team_id}
                 >
                   <span className="font-bold underline group-hover:text-lime-500">{rec.name}</span>

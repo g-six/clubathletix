@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         let match = await getMatch(match_id)
         if (match?.team?.members.length) {
             const updated_by = match?.team?.members[0].user_id
-            console.log(updated_by)
+
             if (updated_by) {
                 if (!match.sh_end) {
                     let part_to_update: {
@@ -19,12 +19,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                         fh_end?: string
                         sh_start?: string
                         sh_end?: string
+                        status: string
                     } = {
+                        status: match.status
                     }
 
-                    if (reason === 'end 1st half') part_to_update.fh_end = localized_time
-                    else if (reason === 'end 2nd half' && match.fh_end) part_to_update.sh_end = localized_time
-                    else if (reason.startsWith('end ') && match.fh_end) part_to_update.sh_end = localized_time
+                    if (reason === 'end 1st half') {
+                        part_to_update.fh_end = localized_time
+                        part_to_update.status = 'halftime'
+                    } else if (reason === 'end 2nd half' && match.fh_end) {
+                        part_to_update.sh_end = localized_time
+                        part_to_update.status = 'fulltime'
+                    }
+                    else if (reason.startsWith('end ') && match.fh_end) {
+                        part_to_update.sh_end = localized_time
+                        part_to_update.status = 'fulltime'
+                    }
 
                     await updateMatch({
                         ...part_to_update as unknown as Match,
@@ -44,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         }, {
             status: 401
         })
-    } \
+    }
     return Response.json({
         message: 'Match failed to start due to invalid criteria'
     }, {

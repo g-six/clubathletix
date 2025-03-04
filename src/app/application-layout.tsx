@@ -1,6 +1,5 @@
 'use server'
 
-import { auth } from '@/auth'
 import { Avatar } from '@/components/avatar'
 import { Dropdown, DropdownButton } from '@/components/dropdown'
 import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '@/components/navbar'
@@ -18,7 +17,9 @@ import {
 } from '@/components/sidebar'
 import { SidebarLayout } from '@/components/sidebar-layout'
 import { getTournaments } from '@/data'
-import { getUserByEmail } from '@/models/user'
+import { getAuthForOperation } from '@/models/auth'
+import { SessionMatch } from '@/typings/match'
+import { SessionTeam } from '@/typings/team'
 import { ArrowTrendingUpIcon, ChevronUpIcon, TrophyIcon } from '@heroicons/react/16/solid'
 import {
   CalendarIcon,
@@ -38,15 +39,14 @@ export async function ApplicationLayout({
   events: Awaited<ReturnType<typeof getTournaments>>
   children: React.ReactNode
 }) {
-  const session = await auth()
+  const session = await getAuthForOperation().catch(console.error)
   let basepath = '/'
 
   let organization_id = ''
 
-  if (!session?.user?.email) {
+  if (!session?.email) {
     return <section className="flex h-screen flex-col items-center justify-center px-8">{children}</section>
   }
-  const user = await getUserByEmail(session.user.email)
 
   let isRoot = false
 
@@ -59,18 +59,13 @@ export async function ApplicationLayout({
     }
   }[] = []
 
-  const matches: {
-    match_id: string
-    opponent: string
-    home_or_away: string | null
-    match_date: string
-  }[] = []
-  const teams: unknown[] = []
+  const matches: SessionMatch[] = []
+  const teams: SessionTeam[] = []
 
-  user?.team_members.forEach((membership) => {
+  session?.team_members.forEach((membership) => {
     teams.push(membership.team)
   })
-  user?.organizations.forEach((membership) => {
+  session.organizations.forEach((membership) => {
     if (!organization_id) organization_id = membership.organization_id
 
     organizations.push({
@@ -81,12 +76,12 @@ export async function ApplicationLayout({
         logo: membership.organization.logo ? `/api/files/${membership.organization.logo}` : undefined,
       },
     })
-    membership.organization.leagues.forEach((league) => {
-      league.matches.forEach((match) => {
-        matches.push(match)
-      })
-    })
   })
+
+  teams.forEach((team) => {
+    matches.push(...team.matches)
+  })
+
   return (
     <SidebarLayout
       navbar={
@@ -105,17 +100,7 @@ export async function ApplicationLayout({
       sidebar={
         <Sidebar>
           <SidebarHeader>
-            <OrganizationDropdown
-              data={organizations}
-              user={{
-                email: user?.email,
-                first_name: user?.first_name,
-                last_name: user?.last_name,
-                image: user?.image,
-                phone: user?.phone,
-                user_id: user?.user_id,
-              }}
-            />
+            <OrganizationDropdown data={organizations} user={session} />
           </SidebarHeader>
 
           <SidebarBody>
@@ -175,17 +160,17 @@ export async function ApplicationLayout({
             <Dropdown>
               <DropdownButton as={SidebarItem}>
                 <span className="flex min-w-0 items-center gap-3">
-                  {user?.image ? (
-                    <Avatar src={`/api/files/${user.image}`} className="size-10" square alt="" />
+                  {session.image ? (
+                    <Avatar src={`/api/files/${session.image}`} className="size-10" square alt="" />
                   ) : (
                     <UserIcon className="size-10 rounded bg-black/20 dark:bg-white/20" />
                   )}
                   <span className="min-w-0">
                     <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">
-                      {user?.first_name}
+                      {session.first_name}
                     </span>
                     <span className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">
-                      {user?.email}
+                      {session.email}
                     </span>
                   </span>
                 </span>

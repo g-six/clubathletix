@@ -2,7 +2,7 @@
 import SpinningSoccer from '@/images/soccer.gif'
 import { createMatchEvent, MatchRecord, startMatch, stopMatch } from '@/services/match.service'
 import { PauseCircleIcon, PlayCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
-import { MatchEvent, Player } from '@prisma/client'
+import { League, MatchEvent, Player, Team } from '@prisma/client'
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../button'
@@ -19,7 +19,9 @@ type MatchEventWithPlayer = MatchEvent & {
     last_name: string
   }
 }
-export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
+export default function ScoreBoardSection(props: { match: unknown }) {
+  const { match } = props as { match: MatchRecord & { league: League; team: Team; events: MatchEvent[] } }
+
   const homeSide = {
     score: match.home_or_away === 'home' ? match.goals_for : match.goals_against,
     team: match.home_or_away === 'home' ? match.team.name : match.opponent,
@@ -60,6 +62,10 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
   )
 
   useEffect(() => {
+    console.log(match)
+  }, [])
+
+  useEffect(() => {
     if (match.fh_end && match.sh_end && !match.otfh_start) return
 
     const intervalId = setInterval(() => {
@@ -86,7 +92,7 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
   return (
     <>
       <div className="flex items-center justify-center gap-4 text-center">
-        <section className="flex w-1/5 flex-col gap-2 sm:w-2/5">
+        <section className="flex w-2/5 flex-col gap-2">
           <div className="mx-auto w-full overflow-hidden rounded-full">
             <EventDialog
               plain
@@ -97,17 +103,17 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
               onSubmit={(payload: unknown) => {
                 logEvent(payload as { [k: string]: string })
               }}
-              disabled={!teamAdmin}
+              disabled={!teamAdmin || (match.result !== 'pending' && Boolean(match.fh_end) && Boolean(match.sh_end))}
             >
               0
             </EventDialog>
           </div>
           <div className="mb-2 text-xs font-bold lg:text-xs">{homeSide.team}</div>
         </section>
-        <section>
+        <section className="w-1/5">
           <GameActionButton match={match} write-mode={Boolean(teamAdmin)} />
         </section>
-        <section className="flex w-1/5 flex-col gap-2 sm:w-2/5">
+        <section className="flex w-2/5 flex-col gap-2">
           <div className="mx-auto w-full overflow-hidden rounded-full">
             <EventDialog
               plain
@@ -118,7 +124,7 @@ export default function ScoreBoardSection({ match }: { match: MatchRecord }) {
               onSubmit={(payload: unknown) => {
                 logEvent(payload as { [k: string]: string })
               }}
-              disabled={!teamAdmin}
+              disabled={!teamAdmin || (match.result !== 'pending' && Boolean(match.fh_end) && Boolean(match.sh_end))}
             >
               0
             </EventDialog>
@@ -387,7 +393,7 @@ function GameActionButton(props: { match: MatchRecord; 'write-mode': boolean }) 
                     .finally(updateLabel)
               }
             }}
-            className="!text-xs capitalize sm:!text-sm"
+            className="!px-1.5 !py-1 !text-xs capitalize sm:!text-sm"
           >
             {buttonLabel}
           </Button>

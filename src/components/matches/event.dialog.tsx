@@ -52,29 +52,23 @@ export function EventDialog(
   const [sideClicked, setSideClicked] = useState<'home' | 'away'>()
 
   let goals: {
-    jersey_number?: string
+    opponent_number?: string
     player_id?: string
     assist?: {
-      jersey_number?: string
+      opponent_number?: string
       player_id?: string
     }
     side: 'home' | 'away'
   }[] = []
   props.match.events.forEach((event) => {
-    if (props.match.home_or_away && props.event === 'goal' && event.player_id && event.event_type === 'goal') {
+    if (props.match.home_or_away && props.event === 'goal' && event.event_type === 'goal') {
       goals.push({
+        opponent_number: event.opponent_number,
         player_id: event.player_id,
         side: props.match.home_or_away as 'home' | 'away',
       })
     }
   })
-
-  for (let i = 0; i < Number(props.match.goals_against || 0); i++) {
-    goals.push({
-      opponent_number: undefined,
-      side: props.match.home_or_away === 'home' ? 'away' : 'home',
-    })
-  }
   const [events, setEvents] = useState<{
     goals: {
       opponent_number?: string
@@ -129,7 +123,6 @@ export function EventDialog(
     homeSide = events.red_cards.filter((evt) => evt.side === 'home')
     awaySide = events.red_cards.filter((evt) => evt.side === 'away')
   }
-
   let bias = 0
   if (homeSide.length && !awaySide.length) bias = 9
   else if (awaySide.length && !homeSide.length) bias = 1
@@ -150,14 +143,22 @@ export function EventDialog(
               width={80}
               height={80}
               title={props.match.team.name}
-              className="mx-auto w-12 rounded-full sm:w-24"
+              className="mx-auto w-20 rounded-full sm:w-24"
             />
           ) : (
-            <GenericTeamLogo className="mx-auto aspect-square w-12 text-zinc-500 sm:w-24" />
+            <div className="relative">
+              <GenericTeamLogo className="mx-auto aspect-square w-20 text-zinc-500 sm:w-24" />
+              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-black">
+                {props.match.opponent
+                  .split(' ')
+                  .map((c) => (c.length > 2 ? c[0] : c))
+                  .join('')}
+              </span>
+            </div>
           )}
           <span className="h-8 w-full" />
           <Button type="button" onClick={() => setIsOpen(true)} {...others}>
-            {events.goals.filter((g) => g.side === side).length}
+            {homeSide.length}
           </Button>
         </>
       ) : (

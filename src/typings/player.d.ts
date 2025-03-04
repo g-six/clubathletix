@@ -1,0 +1,1 @@
+export type SessionPlayer = Pick<Player, 'player_id' | 'first_name' | 'last_name' | 'photo' | 'user_id'>

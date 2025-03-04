@@ -224,9 +224,7 @@ export function MatchDialog(props: { 'team-id': string } & React.ComponentPropsW
                 </CheckboxField>
               </FieldGroup>
             </DialogBody>
-            <div className="mt-4 w-full text-zinc-400">
-              <span className="text-xs/4">A notification will be sent to each player / parent / guardian.</span>
-            </div>
+
             <DialogActions>
               <Button
                 plain

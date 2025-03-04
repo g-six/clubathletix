@@ -2,20 +2,16 @@ import { auth } from '@/auth'
 import { prisma } from '@/prisma'
 import bcrypt from 'bcryptjs'
 import { getUserByEmail } from './user'
-import { TeamMember, User } from '@prisma/client'
+import { SessionUser } from '@/typings/user'
 
-export async function getAuthForOperation(): Promise<User & {
-    team_members: TeamMember[]
-}> {
+export async function getAuthForOperation(): Promise<SessionUser> {
     const session = await auth()
     if (!session?.user?.email) throw new Error('Unauthorized')
 
     const user = await getUserByEmail(session.user.email)
     if (!user) throw new Error('Unauthorized')
 
-    return user as unknown as User & {
-        team_members: TeamMember[]
-    }
+    return user
 }
 export async function login(email: string, password: string) {
     const user = await prisma.user.findUnique({
