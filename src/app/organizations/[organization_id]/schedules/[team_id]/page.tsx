@@ -1,6 +1,7 @@
 import { Button } from '@/components/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
-import { getOrganization, Player } from '@/models/organization'
+import { getMySessionAndOrganization, Player } from '@/models/organization'
+import { Team, TeamMember } from '@prisma/client'
 import type { Metadata } from 'next'
 import { getTeam } from '../actions'
 import { TeamDropdown } from '../dropdown'
@@ -11,13 +12,18 @@ export const metadata: Metadata = {
 
 export default async function TeamPage(props: { params: Promise<unknown> }) {
   const { organization_id, team_id } = (await props.params) as { organization_id: string; team_id: string }
-  const [organization, team] = await Promise.all([getOrganization(organization_id), team_id ? getTeam(team_id) : null])
-
+  const [organization, team] = await Promise.all([
+    getMySessionAndOrganization(organization_id),
+    team_id ? getTeam(team_id) : null,
+  ])
+  const my_teams = organization.session.team_members
+    .filter((m: TeamMember) => m.organization_id === organization_id)
+    .map((m: TeamMember & { team: Team }) => m.team)
   return (
     <>
       <div className="flex items-end justify-between gap-4">
         <div className="relative flex w-1/3">
-          <TeamDropdown data={organization.teams || []} anchor="bottom start" className="w-56" selected={team_id} />
+          <TeamDropdown data={my_teams || []} anchor="bottom start" className="w-56" selected={team_id} />
         </div>
         <Button className="-my-0.5">Add player</Button>
       </div>
@@ -31,7 +37,7 @@ export default async function TeamPage(props: { params: Promise<unknown> }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {team.players.map((record: Player) => {
+          {team?.players.map((record: Player) => {
             return (
               <TableRow
                 key={record.player_id}

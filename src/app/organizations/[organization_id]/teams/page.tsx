@@ -1,26 +1,21 @@
-import { cookies } from 'next/headers'
-
 import { Badge } from '@/components/badge'
 import { Card } from '@/components/card'
 import Greeting from '@/components/greeting'
 import { Subheading } from '@/components/heading'
+import { TeamDialog } from '@/components/organizations/team.dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { formatDateTime } from '@/lib/date-helper'
-import { getOrganization } from '@/models/organization'
+import { getMySessionAndOrganization } from '@/models/organization'
+import { SessionTeam } from '@/typings/team'
+import { PlusIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { MatchDialog } from '../../../../components/organizations/match.dialog'
 
 export default async function TeamIndexPage(props: { params: Promise<unknown> }) {
-  const cookieStore = await cookies()
   const { organization_id } = (await props.params) as { organization_id: string }
-  const organization = await getOrganization(organization_id)
+  const organization = await getMySessionAndOrganization(organization_id)
 
-  const teams: {
-    team_id: string
-    name: string
-    age_group: string
-    division: string
-  }[] = organization?.teams || []
+  const teams: SessionTeam[] = organization?.teams || []
 
   let matches: {
     [k: string]: string | null | Date | number
@@ -30,7 +25,7 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
     <>
       <Greeting />
       <div className="mt-8 flex items-end justify-between">
-        <Subheading>Overview</Subheading>
+        <Subheading>{organization.name} Overview</Subheading>
       </div>
       <div className="mt-4 grid gap-8 lg:grid-cols-2">
         <Card
@@ -86,7 +81,12 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
             <TableHeader>Team</TableHeader>
             <TableHeader>Coach</TableHeader>
             <TableHeader>Upcoming match</TableHeader>
-            <TableHeader className="w-8 text-right">&nbsp;</TableHeader>
+            <TableHeader className="w-8 text-right">
+              <TeamDialog skeleton organization-id={organization_id} leagues={organization?.leagues}>
+                <span className="sr-only">Create team</span>
+                <PlusIcon className="h-4 w-4 cursor-pointer" />
+              </TeamDialog>
+            </TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -100,14 +100,14 @@ export default async function TeamIndexPage(props: { params: Promise<unknown> })
                 {team.name} ({team.age_group})
               </TableCell>
               <TableCell>
-                {organization.members
+                {team.members
                   .filter((m) => m.role.toLowerCase().includes('coach'))
                   .map((m) =>
                     [
                       m.user.first_name,
                       m.user.last_name,
                       !m.role.toLowerCase().startsWith('coach')
-                        ? `(${m.role.replace('Coach', '', 'gi').trim().toLowerCase()})`
+                        ? `(${m.role.replace('/Coach/gi', '').trim().toLowerCase()})`
                         : undefined,
                     ]
                       .filter(Boolean)

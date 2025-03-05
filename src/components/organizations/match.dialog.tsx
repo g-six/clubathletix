@@ -8,13 +8,15 @@ import { Select } from '@/components/select'
 import { Switch } from '@/components/switch'
 import { getAvailableLeaguesForTeam } from '@/services/league.service'
 import { createMatch } from '@/services/match.service'
+import { SesssionLeague } from '@/typings/league'
 import { useCallback, useEffect, useState } from 'react'
 import DateField from '../date'
 
 export function MatchDialog(
-  props: { 'team-id'?: string; teams?: { team_id: string; name: string }[] } & React.ComponentPropsWithoutRef<
-    typeof Button
-  >
+  props: {
+    'team-id'?: string
+    teams?: { team_id: string; league?: SesssionLeague; name: string }[]
+  } & React.ComponentPropsWithoutRef<typeof Button>
 ) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
@@ -109,29 +111,54 @@ export function MatchDialog(
             <DialogBody>
               <FieldGroup className="grid gap-x-1 sm:grid-cols-4">
                 {Boolean(props.teams?.length) && (
-                  <Field className="sm:col-span-2">
-                    <Label>Team</Label>
-                    <Select
-                      name="team_id"
-                      defaultValue=""
-                      disabled={isLoading}
-                      onChange={(evt) => {
-                        setPayload({
-                          ...payload,
-                          [evt.currentTarget.name]: evt.currentTarget.value,
-                        })
-                      }}
-                    >
-                      <option value="" disabled>
-                        Select team&hellip;
-                      </option>
-                      {props.teams?.map((team) => (
-                        <option value={team.team_id} key={team.team_id}>
-                          {team.name}
+                  <>
+                    <Field className="sm:col-span-2">
+                      <Label>Team</Label>
+                      <Select
+                        name="team_id"
+                        defaultValue=""
+                        disabled={isLoading}
+                        onChange={(evt) => {
+                          setPayload({
+                            ...payload,
+                            [evt.currentTarget.name]: evt.currentTarget.value,
+                          })
+                        }}
+                      >
+                        <option value="" disabled>
+                          Select team&hellip;
                         </option>
-                      ))}
-                    </Select>
-                  </Field>
+                        {props.teams?.map((team) => (
+                          <option value={team.team_id} key={team.team_id}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field className="sm:col-span-2">
+                      <Label>League</Label>
+                      <Select
+                        name="league_id"
+                        defaultValue=""
+                        disabled={!payload.team_id}
+                        onChange={(evt) => {
+                          setPayload({
+                            ...payload,
+                            [evt.currentTarget.name]: evt.currentTarget.value,
+                          })
+                        }}
+                      >
+                        <option value="" disabled>
+                          Select league&hellip;
+                        </option>
+                        {props.teams?.map((team) => (
+                          <option value={team.league?.league_id} key={team.league?.league_id}>
+                            {team.league?.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                  </>
                 )}
                 <Field className="sm:col-span-2">
                   <Label>Opponent</Label>

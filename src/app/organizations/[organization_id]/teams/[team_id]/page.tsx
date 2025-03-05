@@ -9,12 +9,14 @@ import { CreatePlayerDialog, FindPlayerDialog } from '@/components/organizations
 import { PhotoUploader } from '@/components/photo-uploader'
 import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
+import { TeamDropdown } from '@/components/teams/team.dropdown'
 import { getMySessionAndOrganization, Player } from '@/models/organization'
 import { updateTeam } from '@/models/team'
 import { EllipsisVerticalIcon } from '@heroicons/react/16/solid'
+import { Team, TeamMember } from '@prisma/client'
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { getTeam } from '../actions'
-import { TeamDropdown } from '../dropdown'
 
 export const metadata: Metadata = {
   title: 'Members',
@@ -22,16 +24,22 @@ export const metadata: Metadata = {
 
 export default async function TeamPage(props: { params: Promise<unknown> }) {
   const { organization_id, team_id } = (await props.params) as { organization_id: string; team_id: string }
-  const [organization, team] = await Promise.all([
+  const [user, team] = await Promise.all([
     getMySessionAndOrganization(organization_id),
     team_id ? getTeam(team_id) : null,
   ])
+
+  if (!team) notFound()
+
+  const my_teams = user.session.team_members
+    .filter((m: TeamMember) => m.organization_id === organization_id)
+    .map((m: TeamMember & { team: Team }) => m.team)
 
   return (
     <>
       <div>
         <div className="relative flex w-1/3">
-          <TeamDropdown data={organization.teams || []} anchor="bottom start" className="w-56" selected={team_id} />
+          <TeamDropdown data={my_teams || []} anchor="bottom start" className="w-56" selected={team_id} />
         </div>
         <div className="mt-4 grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
           <Stat title="Goals scored" value="36" change="0.5%" />

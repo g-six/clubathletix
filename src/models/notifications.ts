@@ -1,9 +1,12 @@
 export const TEAM_INVITATION_TEMPLATE = 39203872
+export const ADDED_TO_TEAM_TEMPLATE = 39188601
+export const INVITED_TO_CLUB_TEMPLATE = 39180237
+
 export async function createEmailNotification({
     sender,
     receiver,
     TemplateModel,
-    TemplateId = 39180237
+    TemplateId = INVITED_TO_CLUB_TEMPLATE
 }: {
     sender: {
         email: string,

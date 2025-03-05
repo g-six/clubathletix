@@ -5,14 +5,12 @@ import { Dialog, DialogActions, DialogBody, DialogDescription, DialogTitle } fro
 import { Field, FieldGroup, Label } from '@/components/fieldset'
 import { Input } from '@/components/input'
 import { createTeam } from '@/services/team.service'
-import { Prisma } from '@prisma/client'
+import { SesssionLeague } from '@/typings/league'
 import { useCallback, useState } from 'react'
 import { Select } from '../select'
 
 export function TeamDialog(
-  props: { 'organization-id': string; leagues: Prisma.LeagueUncheckedCreateInput[] } & React.ComponentPropsWithoutRef<
-    typeof Button
-  >
+  props: { 'organization-id': string; leagues: SesssionLeague[] } & React.ComponentPropsWithoutRef<typeof Button>
 ) {
   let [isOpen, setIsOpen] = useState(false)
   let [isLoading, toggleLoader] = useState(false)
@@ -131,12 +129,9 @@ export function TeamDialog(
             }}
           >
             {isLoading ? (
-              <>
-                <img src="/loaders/default.gif" className="size-4 rounded-full bg-white" />
-                <span>Creating...</span>
-              </>
+              <img src="/loaders/default.gif" alt="Loading" className="h-4 w-4 rounded-full bg-white" />
             ) : (
-              'Create team'
+              <>Save</>
             )}
           </Button>
         </DialogActions>

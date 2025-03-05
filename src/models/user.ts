@@ -3,7 +3,7 @@ import { Prisma, User } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { getPresignedUrlWithClient } from './file'
 import { randomUUID } from 'crypto'
-import { createEmailNotification } from './notifications'
+import { createEmailNotification, INVITED_TO_CLUB_TEMPLATE } from './notifications'
 import { getAuthForOperation } from './auth'
 import { SessionUser } from '@/typings/user'
 
@@ -54,6 +54,8 @@ export async function getUserByEmail(email: string): Promise<SessionUser | null>
                     role: true,
                     team: {
                         select: {
+                            organization_id: true,
+                            team_id: true,
                             name: true,
                             age_group: true,
                             division: true,
@@ -119,7 +121,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
     const { timezone, organization_id, team_id, team_name, role, player_id, phone, imageUrl, ...input } = payload
 
     if (!user?.email) {
-        TemplateId = 39180237
+        TemplateId = INVITED_TO_CLUB_TEMPLATE
         passwd = [
             organization_id.substring(0, 3),
             input.first_name.substring(0, 5),
@@ -217,7 +219,6 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
             if (teamMembership) {
                 console.log('Already', ['o', 'a', 'e', 'u', 'i'].includes(teamMembership.role[0].toLowerCase()) ? 'an' : 'a', teamMembership.role.toLowerCase(), 'of', teamMembership.team?.name)
             } else {
-
                 await prisma.teamMember.create({
                     data: {
                         organization_id,
@@ -233,6 +234,14 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
         if (!user_id) return
 
         if (TemplateId) {
+            const team = await prisma.team.findUnique({
+                where: {
+                    team_id,
+                },
+                select: {
+                    name: true,
+                }
+            })
             await createEmailNotification({
                 sender: {
                     email: auth.email,
@@ -247,7 +256,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
                     sender: auth.first_name,
                     name: payload.first_name,
                     player: "your child's",
-                    team: payload.team_name || "team",
+                    team: team?.name || "team",
                     product_name: "Club Athletix",
                     passwd,
                     action_url: `https://clubathletix.com/invitations/accept/${user_id}?team=${team_id}`

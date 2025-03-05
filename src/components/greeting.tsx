@@ -11,7 +11,7 @@ export default function Greeting() {
 
   useEffect(() => {
     if (user.first_name) {
-      setGreeting((p) => `${p}${user.first_name ? ', ' : ''}${user.first_name}`)
+      setGreeting((p) => `${p}, ${user.first_name}`)
     }
   }, [])
   return <Heading>{greeting}</Heading>

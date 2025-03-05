@@ -81,8 +81,6 @@ export function FindPlayerDialog(
     }
   }, [payload])
 
-  console.log({ payload })
-
   useEffect(() => {
     if (payload.player_id) {
       const p = players.find((p) => p.player_id === payload.player_id)
@@ -202,7 +200,7 @@ export function FindPlayerDialog(
               >
                 <option value="">Select&hellip;</option>
 
-                {parents.map((record) => (
+                {parents?.map((record) => (
                   <option key={record.user_id} value={record.user_id}>
                     {record.user.first_name} {record.user.last_name}
                   </option>

@@ -1,6 +1,6 @@
 import { getPresignedUrlWithClient } from '@/models/file'
 import { prisma } from '@/prisma'
-import { Prisma } from '@prisma/client'
+import { Match, Prisma, Training, League } from '@prisma/client'
 import { cookies } from 'next/headers'
 import { getAuthForOperation } from './auth'
 import { SessionOrganization } from '@/typings/organization'
@@ -61,70 +61,105 @@ export async function getMySessionAndOrganization(organization_id: string, optio
         skip?: number
     }
 }) {
-    const [organization, teams, members, matches, leagues, players, session] = await Promise.all([
-        prisma.organization.findUnique({
-            where: {
-                organization_id
-            }
-        }),
-        prisma.team.findMany({
-            include: {
-                league: true
-            },
-            where: {
-                organization_id
-            }
-        }),
-        prisma.teamMember.findMany({
-            where: {
-                organization_id
-            },
-            include: {
-                user: {
-                    select: {
-                        first_name: true,
-                        last_name: true,
-                        email: true,
-                        phone: true,
-                        image: true,
-                        created_at: true,
+    const [organization, teams, members, matches, leagues, players, trainings, session]:
+        [Organization, Team[], TeamMember[], Match[], League[], Player[], Training[], SessionUser] = await Promise.all([
+            prisma.organization.findUnique({
+                where: {
+                    organization_id
+                }
+            }),
+            prisma.team.findMany({
+                include: {
+                    league: true,
+                    members: {
+                        select: {
+                            role: true,
+                            user: {
+                                select: {
+                                    first_name: true,
+                                    last_name: true,
+                                    image: true,
+                                }
+                            }
+                        }
+                    }
+                },
+                where: {
+                    organization_id
+                },
+            }),
+            prisma.teamMember.findMany({
+                where: {
+                    organization_id
+                },
+                select: {
+                    user_id: true,
+                    team_id: true,
+                    team_member_id: true,
+                    role: true,
+                    team: {
+                        select: {
+                            logo: true,
+                            name: true,
+                            division: true,
+                            age_group: true
+                        }
+                    },
+                    user: {
+                        select: {
+                            first_name: true,
+                            last_name: true,
+                            email: true,
+                            phone: true,
+                            image: true,
+                            created_at: true,
+                        }
                     }
                 }
-            }
-        }),
-        prisma.match.findMany({
-            where: {
-                organization_id
-            },
-            orderBy: [{
-                match_date: 'desc'
-            }, {
-                organization_id: 'asc'
-            }],
-        }),
-        prisma.league.findMany({
-            where: {
-                organization_id
-            },
-            orderBy: [{
-                created_at: 'desc'
-            }]
-        }),
-        options?.players ? prisma.teamPlayer.findMany({
-            where: {
-                organization_id
-            },
-            include: {
-                player: true
-            },
-            take: options.players.take,
-            skip: options.players.skip || 0,
-        }) : Promise.resolve([]),
-        getAuthForOperation()
-    ])
+            }),
+            prisma.match.findMany({
+                where: {
+                    organization_id
+                },
+                orderBy: [{
+                    match_date: 'desc'
+                }, {
+                    organization_id: 'asc'
+                }],
+            }),
+            prisma.league.findMany({
+                where: {
+                    organization_id
+                },
+                orderBy: [{
+                    created_at: 'desc'
+                }]
+            }),
+            options?.players ? prisma.teamPlayer.findMany({
+                where: {
+                    organization_id
+                },
+                include: {
+                    player: true
+                },
+                take: options.players.take,
+                skip: options.players.skip || 0,
+            }) : Promise.resolve([]),
+            prisma.training.findMany({
+                where: {
+                    organization_id
+                },
+                orderBy: [{
+                    created_at: 'desc'
+                }]
+            }),
+            getAuthForOperation()
+        ])
     return {
         ...organization,
-        teams,
+        teams: teams.filter(team => {
+            return members.find(m => m.team_id === team.team_id)
+        }),
         members: members.map(m => ({
             team_member_id: m.team_member_id,
             user_id: m.user_id,
@@ -135,6 +170,7 @@ export async function getMySessionAndOrganization(organization_id: string, optio
         matches,
         players,
         leagues,
+        trainings,
         session
     } as SessionOrganization & {
         teams: SessionTeam[]
@@ -149,6 +185,7 @@ export async function getMySessionAndOrganization(organization_id: string, optio
         matches: SessionMatch[]
         players: SessionPlayer[]
         session: SessionUser
+        trainings: Training[]
     }
 }
 

@@ -10,6 +10,7 @@ import { MatchDialog } from '@/components/organizations/match.dialog'
 import { InviteMemberDialog } from '@/components/organizations/member.dialog'
 import { CreateOrganizationForm } from '@/components/organizations/organization.form'
 import { TeamDialog } from '@/components/organizations/team.dialog'
+import { TrainingDialog } from '@/components/organizations/training.dialog'
 import { Select } from '@/components/select'
 import { formatDateTime } from '@/lib/date-helper'
 import { getMySessionAndOrganization } from '@/models/organization'
@@ -33,17 +34,17 @@ export default async function Home(props: { params: Promise<unknown> }) {
         return team.team_id === role.team_id && role.user_id === my.session.user_id
       })
     )
-    .map(({ name, division, age_group, team_id, logo }) => ({
+    .map(({ name, league_id, division, age_group, team_id, logo }) => ({
       name,
       division,
       age_group,
       team_id,
+      league_id,
       logo,
       role: managingRolesAt.find((role) => {
         return team_id === role.team_id && role.user_id === my.session.user_id
       }),
     }))
-  console.log(JSON.stringify({ teams }, null, 2))
   return (
     <>
       <Greeting />
@@ -67,10 +68,11 @@ export default async function Home(props: { params: Promise<unknown> }) {
             manageableTeams.length ? (
               <MatchDialog
                 skeleton
-                teams={manageableTeams.filter(Boolean).map((t) => ({
-                  team_id: t?.team_id as string,
-                  name: t?.name as string,
-                  league: leagues.find((l) => l.league_id === t?.league_id),
+                teams={manageableTeams.filter(Boolean).map(({ league_id, team_id, name }) => ({
+                  team_id,
+                  name,
+                  league_id,
+                  league: leagues.find((l) => l.league_id === league_id),
                 }))}
               >
                 Add match
@@ -106,7 +108,23 @@ export default async function Home(props: { params: Promise<unknown> }) {
         />
         <Card
           title="Upcoming trainings"
-          CreateDialog={<span />}
+          CreateDialog={
+            manageableTeams.length ? (
+              <TrainingDialog
+                skeleton
+                teams={manageableTeams.filter(Boolean).map(({ league_id, team_id, name }) => ({
+                  team_id,
+                  name,
+                  league_id,
+                  league: leagues.find((l) => l.league_id === league_id),
+                }))}
+              >
+                Schedule training
+              </TrainingDialog>
+            ) : (
+              <span />
+            )
+          }
           href={`/organizations/${organization_id}/matches`}
           contents={
             <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">

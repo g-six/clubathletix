@@ -21,7 +21,6 @@ export function TeamDropdown({
     team_id: string
     organization_id: string
     name: string
-    role: string
     short_name?: string
   }[]
   selected?: string
@@ -29,7 +28,7 @@ export function TeamDropdown({
   className?: string
 }) {
   const [team, setTeam] = useState<(typeof data)[0] | null>()
-
+  console.log({ data })
   useEffect(() => {
     if (selected) {
       setTeam(data.find((t) => t.team_id === selected))
@@ -40,7 +39,7 @@ export function TeamDropdown({
     <Dropdown>
       <DropdownButton as={SidebarItem} className={className}>
         <Avatar src="/teams/catalyst.svg" />
-        <SidebarLabel>{team?.name || 'Select a team'}</SidebarLabel>
+        <SidebarLabel>{team?.name || 'Select team'}</SidebarLabel>
         <ChevronDownIcon />
       </DropdownButton>
       <DropdownMenu className="w-full" anchor={anchor}>
@@ -60,6 +59,14 @@ export function TeamDropdown({
         <DropdownItem href="#">
           <PlusIcon />
           <DropdownLabel>New team&hellip;</DropdownLabel>
+        </DropdownItem>
+        <DropdownItem href="#">
+          <PlusIcon />
+          <DropdownLabel>Add player&hellip;</DropdownLabel>
+        </DropdownItem>
+        <DropdownItem href="#">
+          <PlusIcon />
+          <DropdownLabel>Add coach&hellip;</DropdownLabel>
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

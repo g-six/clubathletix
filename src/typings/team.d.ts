@@ -1,7 +1,10 @@
 import { SesssionLeague } from './league'
 import { SessionPlayer } from './player'
+import { SessionTeamMember } from './team-member'
+import { SessionUser } from './user'
 
-export type SessionTeam = Pick<Team, 'team_id' | 'league_id' | 'name' | 'age_group' | 'division' | 'logo' | 'short_name'> & {
+export type SessionTeam = Pick<Team, 'team_id' | 'league_id' | 'organization_id' | 'name' | 'age_group' | 'division' | 'logo' | 'short_name'> & {
+    members: (SessionTeamMember & { user: SessionUser })[]
     matches: (SessionMatch & {
         players: SessionPlayer & {
             matches: {

@@ -5,7 +5,7 @@ import { Input } from '@/components/input'
 import { PhotoUploader } from '@/components/photo-uploader'
 import { Select } from '@/components/select'
 import { Text } from '@/components/text'
-import { getOrganization } from '@/models/organization'
+import { getMySessionAndOrganization } from '@/models/organization'
 import type { Metadata } from 'next'
 import { saveSettings } from './actions'
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function Settings({ params }: { params: Promise<{ organization_id: string }> }) {
   const { organization_id } = await params
-  const organization = await getOrganization(organization_id)
+  const organization = await getMySessionAndOrganization(organization_id)
 
   return (
     <form

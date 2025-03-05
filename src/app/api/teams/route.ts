@@ -1,3 +1,4 @@
+import { getAuthForOperation } from '@/models/auth'
 import { createSession } from '@/models/session'
 import { createTeam } from '@/models/team'
 import { prisma } from '@/prisma'
@@ -5,17 +6,10 @@ import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
-    const cookieStore = await cookies()
-    const created_by = cookieStore.get('user_id')?.value
-    if (!created_by) return Response.json({
-        user_id: created_by
-    }, {
-        status: 401
-    })
-    const session = await createSession(created_by)
+    const session = await getAuthForOperation()
 
-    if (!session) return Response.json({
-        created_by
+    if (!session.user_id) return Response.json({
+        error: 'User is not authorized'
     }, {
         status: 401
     })
@@ -24,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const team = await createTeam({
         ...payload,
-        created_by
+        created_by: session.user_id,
     })
 
     if (team) {

@@ -1,5 +1,4 @@
-import { prisma } from '@/prisma'
-import { Prisma } from '@prisma/client'
+import { Training } from '@prisma/client'
 
 export async function createTraining(payload: unknown) {
     const {
@@ -10,10 +9,10 @@ export async function createTraining(payload: unknown) {
         session_start,
         session_end,
         timezone,
-    } = payload as CreateTraining
+    } = payload as Training
 
     try {
-        await fetch('/api/trainings', {
+        return await fetch('/api/trainings', {
             method: 'POST',
             body: JSON.stringify({
                 team_id,
@@ -29,5 +28,3 @@ export async function createTraining(payload: unknown) {
         console.log('error')
     }
 }
-
-export type CreateTraining = Prisma.Args<typeof prisma.Training, 'create'>['data']

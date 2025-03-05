@@ -5,10 +5,10 @@ export async function createMatch(payload: unknown) {
     const {
         team_id,
         organization_id,
-        league_id,
         opponent,
         location,
         home_or_away,
+        league_id,
     } = payload as CreateMatch
     const { year, month, day, hour, minute } = payload as {
         [k: string]: string
