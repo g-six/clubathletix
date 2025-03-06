@@ -162,7 +162,7 @@ export default function Login() {
           </Button>
         )}
         <Button type="submit" disabled={isLoading}>
-          {isLoading && <img title="loading" src="/loaders/default.gif" className="h-5 w-5 rounded-full bg-white" />}{' '}
+          {isLoading && <img title="loading" src="/loaders/default.gif" className="h-3 w-3 rounded-full bg-white" />}{' '}
           Login
         </Button>
       </div>
