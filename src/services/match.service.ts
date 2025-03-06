@@ -60,7 +60,7 @@ export async function createMatchEvent(payload: unknown) {
 
     try {
         if (event === 'goal') {
-            await fetch(`/api/matches/${match_id}/${event}`, {
+            const results = await fetch(`/api/matches/${match_id}/${event}`, {
                 method: 'POST',
                 body: JSON.stringify({
                     logged_at,
@@ -70,6 +70,8 @@ export async function createMatchEvent(payload: unknown) {
                     assist
                 })
             })
+
+            if (results.ok) return await results.json()
         }
 
     } catch (error) {

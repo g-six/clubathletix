@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 
 import { Badge } from '@/components/badge'
 import { Card } from '@/components/card'
+import Greeting from '@/components/greeting'
 import { Subheading } from '@/components/heading'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
 import { formatDateTime } from '@/lib/date-helper'

@@ -1,11 +1,11 @@
 'use client'
-
 import { Divider } from '@/components/divider'
 import { Subheading } from '@/components/heading'
 import ScoreBoardSection from '@/components/matches/scoreboard.section'
 import Spinner from '@/components/spinner'
 import { formatDateTime, getLengthInMinutes } from '@/lib/date-helper'
 import { getMatch, MatchRecord } from '@/services/match.service'
+
 import { CalendarIcon, ClockIcon, MapPinIcon } from '@heroicons/react/16/solid'
 import { ArrowLeftIcon } from '@heroicons/react/20/solid'
 import { notFound, useParams } from 'next/navigation'
@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 export default function MatchControlPage() {
   const params = useParams()
+
   const [errorCode, setErrorCode] = useState<number>()
   const [match, setMatch] = useState<MatchRecord>()
 
@@ -28,7 +29,6 @@ export default function MatchControlPage() {
     loadMatch()
   }, [])
 
-  console.log(errorCode)
   if (errorCode) notFound()
 
   return (

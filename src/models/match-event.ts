@@ -23,9 +23,23 @@ export async function createMatchEvent(payload: unknown) {
         created_by,
     } as unknown
     try {
-        return await prisma.matchEvent.create({
+        const event = await prisma.matchEvent.create({
             data: data as Prisma.MatchEventCreateInput
         })
+
+        return {
+            ...event,
+            player: player_id ? await prisma.player.findUnique({
+                where: {
+                    player_id,
+                },
+                select: {
+                    first_name: true,
+                    last_name: true,
+                    photo: true,
+                }
+            }) : undefined
+        }
     } catch (error) {
         console.log('createMatchEvent error', JSON.stringify(data, null, 2))
     }

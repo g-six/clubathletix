@@ -158,7 +158,7 @@ export function EventDialog(
           )}
           <span className="h-8 w-full" />
           <Button type="button" onClick={() => setIsOpen(true)} {...others}>
-            {homeSide.length}
+            {others.children}
           </Button>
         </>
       ) : (
@@ -261,6 +261,11 @@ export function EventDialog(
                   autoFocus
                 />
               )}
+            </Field>
+
+            <Field>
+              <Label>Comments on the {props.event}</Label>
+              <Input type="text" name="description" />
             </Field>
           </FieldGroup>
         </DialogBody>

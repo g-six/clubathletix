@@ -79,11 +79,11 @@ export function MatchDialog(
         setPayload((prev) => ({
           ...prev,
           league_id: teamLeague.league_id,
-          organization_id: teamLeague.organization_id,
         }))
       })
     }
   }, [getLeagueOptions, isOpen])
+
   return (
     <>
       <Button type="button" onClick={() => setIsOpen(true)} {...props} />

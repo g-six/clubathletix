@@ -20,14 +20,20 @@ type MatchEventWithPlayer = MatchEvent & {
   }
 }
 export default function ScoreBoardSection(props: { match: unknown }) {
-  const { match } = props as { match: MatchRecord & { league: League; team: Team; events: MatchEvent[] } }
-
+  const { match: args } = props as { match: MatchRecord & { league: League; team: Team; events: MatchEvent[] } }
+  const [match, setMatch] = useState<MatchRecord & { league: League; team: Team; events: MatchEvent[] }>(args)
   const homeSide = {
-    score: match.home_or_away === 'home' ? match.goals_for : match.goals_against,
+    score: match.events.filter((e) => {
+      if (match.home_or_away === 'home') return Boolean(e.player_id)
+      else return Boolean(e.opponent_number)
+    }).length,
     team: match.home_or_away === 'home' ? match.team.name : match.opponent,
   }
   const awaySide = {
-    score: match.home_or_away === 'away' ? match.goals_for : match.goals_against,
+    score: match.events.filter((e) => {
+      if (match.home_or_away === 'away') return Boolean(e.player_id)
+      else return Boolean(e.opponent_number)
+    }).length,
     team: match.home_or_away === 'away' ? match.team.name : match.opponent,
   }
 
@@ -53,17 +59,14 @@ export default function ScoreBoardSection(props: { match: unknown }) {
 
   const logEvent = useCallback(
     async (payload: { [k: string]: string }) => {
-      const res = await createMatchEvent({
+      const event = await createMatchEvent({
         ...payload,
         logged_at: timeElapsed,
       })
+      setEvents((prev) => [...(prev || []), event])
     },
     [match, timeElapsed]
   )
-
-  useEffect(() => {
-    console.log(match)
-  }, [])
 
   useEffect(() => {
     if (match.fh_end && match.sh_end && !match.otfh_start) return
@@ -83,11 +86,12 @@ export default function ScoreBoardSection(props: { match: unknown }) {
 
       const minutes = Math.floor(num / 60000) + pad
       const seconds = Math.floor(num / 1000) % 60
-      setTimeElapsed(`${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`)
+      const te = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
+      setTimeElapsed(te)
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [timeElapsed])
+  }, [timeElapsed, match])
 
   return (
     <>
@@ -105,13 +109,22 @@ export default function ScoreBoardSection(props: { match: unknown }) {
               }}
               disabled={!teamAdmin || (match.result !== 'pending' && Boolean(match.fh_end) && Boolean(match.sh_end))}
             >
-              0
+              {homeSide.score}
             </EventDialog>
           </div>
           <div className="mb-2 text-xs font-bold lg:text-xs">{homeSide.team}</div>
         </section>
         <section className="w-1/5">
-          <GameActionButton match={match} write-mode={Boolean(teamAdmin)} />
+          <GameActionButton
+            done={(updates) => {
+              setMatch((prev) => ({
+                ...prev,
+                ...(updates as unknown as typeof prev),
+              }))
+            }}
+            match={match}
+            write-mode={Boolean(teamAdmin)}
+          />
         </section>
         <section className="flex w-2/5 flex-col gap-2">
           <div className="mx-auto w-full overflow-hidden rounded-full">
@@ -126,7 +139,7 @@ export default function ScoreBoardSection(props: { match: unknown }) {
               }}
               disabled={!teamAdmin || (match.result !== 'pending' && Boolean(match.fh_end) && Boolean(match.sh_end))}
             >
-              0
+              {awaySide.score}
             </EventDialog>
           </div>
           <div className="mb-2 text-xs font-bold lg:text-xs">{awaySide.team}</div>
@@ -143,9 +156,9 @@ export default function ScoreBoardSection(props: { match: unknown }) {
                   matchEvent.event_type,
                   matchEvent.logged_at,
                 ]
-                  .map(Boolean)
+                  .filter(Boolean)
                   .join('-')}
-                name={matchEvent.player.first_name || `${match.opponent} #${matchEvent.opponent_number}`}
+                name={matchEvent.player?.first_name || `${match.opponent} #${matchEvent.opponent_number}`}
                 at={matchEvent.logged_at || ''}
                 video-url={matchEvent.video_url}
                 match={match}
@@ -155,27 +168,26 @@ export default function ScoreBoardSection(props: { match: unknown }) {
             ))}
         </section>
         <section className="flex w-1/2 flex-col gap-1 text-left">
-          {match.home_or_away === 'away' &&
-            events
-              .filter((me) => me.logged_at && (match.home_or_away === 'away' ? me.player_id : me.opponent_number))
-              .map((matchEvent) => (
-                <EventRow
-                  key={[
-                    matchEvent.player_id || matchEvent.opponent_number || '',
-                    matchEvent.event_type,
-                    matchEvent.logged_at,
-                  ]
-                    .filter(Boolean)
-                    .join('-')}
-                  match-event-id={matchEvent.match_event_id as string}
-                  name={matchEvent.player.first_name || `${match.opponent} #${matchEvent.opponent_number}`}
-                  at={matchEvent.logged_at || ''}
-                  video-url={matchEvent.video_url}
-                  match={match}
-                  event={matchEvent.event_type as 'goal' | 'yellow_card' | 'red_card'}
-                  away
-                />
-              ))}
+          {events
+            .filter((me) => me.logged_at && (match.home_or_away === 'away' ? me.player_id : me.opponent_number))
+            .map((matchEvent) => (
+              <EventRow
+                key={[
+                  matchEvent.player_id || matchEvent.opponent_number || '',
+                  matchEvent.event_type,
+                  matchEvent.logged_at,
+                ]
+                  .filter(Boolean)
+                  .join('-')}
+                match-event-id={matchEvent.match_event_id as string}
+                name={matchEvent.player?.first_name || `${match.opponent} #${matchEvent.opponent_number}`}
+                at={matchEvent.logged_at || ''}
+                video-url={matchEvent.video_url}
+                match={match}
+                event={matchEvent.event_type as 'goal' | 'yellow_card' | 'red_card'}
+                away
+              />
+            ))}
         </section>
       </div>
 
@@ -313,7 +325,14 @@ function EventRow({
   )
 }
 
-function GameActionButton(props: { match: MatchRecord; 'write-mode': boolean }) {
+function GameActionButton({
+  done,
+  ...props
+}: {
+  done(match: MatchRecord): void
+  match: MatchRecord
+  'write-mode': boolean
+}) {
   let [timeElapsed, setTimeElapsed] = useState<string>('0')
   const [match, setMatch] = useState(props.match)
   let [buttonLabel, setButtonLabel] = useState<
@@ -361,6 +380,7 @@ function GameActionButton(props: { match: MatchRecord; 'write-mode': boolean }) 
   useEffect(() => {
     updateInterval()
     updateLabel()
+    done(match)
   }, [match])
 
   return (
