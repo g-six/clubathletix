@@ -31,6 +31,8 @@ export default function MatchControlPage() {
 
   if (errorCode) notFound()
 
+  console.log(match)
+
   return (
     <div className="relative">
       {match?.league ? (

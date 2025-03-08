@@ -22,7 +22,11 @@ export default async function OrganizationMatchesPage({ params }: { params: Prom
         </TableHead>
         <TableBody>
           {matches.map((record) => (
-            <TableRow key={record.match_id} href={record.match_id} title={`${record.team_id} #${record.opponent}`}>
+            <TableRow
+              key={record.match_id}
+              href={`/match-control/${record.match_id}`}
+              title={`${record.team_id} #${record.opponent}`}
+            >
               <TableCell>{record.team.name}</TableCell>
               <TableCell>{record.opponent}</TableCell>
               <TableCell className="text-zinc-500">{formatDateTime(new Date(record.match_date))}</TableCell>

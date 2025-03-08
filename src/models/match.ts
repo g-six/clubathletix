@@ -54,7 +54,7 @@ export async function getMatch(match_id: string) {
     try {
         const session = await getAuthForOperation()
         if (!session?.user_id) return
-        return await prisma.match.findUnique({
+        const results = await prisma.match.findUnique({
             where: {
                 match_id,
             },
@@ -116,6 +116,14 @@ export async function getMatch(match_id: string) {
                 }
             }
         })
+
+        return {
+            ...results,
+            team: results ? {
+                role: results.team.members.find(member => member.user_id === session.user_id)?.role,
+                ...results.team,
+            } : undefined,
+        }
     } catch (error) {
         console.log(error)
         console.log('Error in models/match.ts:getMatch')
