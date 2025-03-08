@@ -107,7 +107,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
                 email: added?.player?.user?.email,
             })
         } else {
-            added?.player?.parents.forEach((parent) => {
+            added?.player?.parents?.forEach((parent) => {
                 if (parent?.user) {
                     receivers.push({
                         name: parent.user.first_name as string,
