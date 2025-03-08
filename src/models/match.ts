@@ -123,17 +123,38 @@ export async function getMatch(match_id: string) {
 }
 
 export async function getMatchesByOrganizationId(organization_id: string, limit = 3) {
-    const matches = await prisma.match.findMany({
-        where: {
-            organization_id,
-        },
-        take: limit,
-        orderBy: {
-            match_date: 'desc',
-        }
-    })
+    const [matches, organization] = await Promise.all(
+        [prisma.match.findMany({
+            where: {
+                organization_id,
+            },
+            include: {
+                team: {
+                    select: {
+                        name: true,
+                        logo: true
+                    }
+                }
+            },
+            take: limit,
+            orderBy: {
+                match_date: 'desc',
+            }
+        }),
+        prisma.organization.findUnique({
+            where: {
+                organization_id
+            },
+            select: {
+                name: true,
+            }
+        })
+        ])
 
-    return matches
+    return matches.map(match => ({
+        ...match,
+        organization,
+    }))
 }
 
 export type CreateMatch = Prisma.Args<typeof prisma.match, 'create'>['data']
