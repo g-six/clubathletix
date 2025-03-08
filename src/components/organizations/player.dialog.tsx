@@ -200,11 +200,12 @@ export function FindPlayerDialog(
               >
                 <option value="">Select&hellip;</option>
 
-                {parents?.map((record) => (
-                  <option key={record.user_id} value={record.user_id}>
-                    {record.user.first_name} {record.user.last_name}
-                  </option>
-                ))}
+                {parents &&
+                  parents?.map((record) => (
+                    <option key={record.user_id} value={record.user_id}>
+                      {record.user.first_name} {record.user.last_name}
+                    </option>
+                  ))}
               </Select>
             </Field>
           </FieldGroup>
