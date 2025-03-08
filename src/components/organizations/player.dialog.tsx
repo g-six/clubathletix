@@ -88,7 +88,10 @@ export function FindPlayerDialog(
     }
   }, [payload.player_id])
   useEffect(() => {
-    getParents(props['team-id']).then(setParents).catch(console.error).finally()
+    getParents(props['team-id'])
+      .then((p) => p && setParents(p))
+      .catch(console.error)
+      .finally()
   }, [])
 
   return (
