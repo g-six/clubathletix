@@ -1,10 +1,9 @@
 'use client'
 import { Divider } from '@/components/divider'
-import { Field, Label } from '@/components/fieldset'
-import { Heading, Subheading } from '@/components/heading'
+import { Subheading } from '@/components/heading'
 import ScoreBoardSection from '@/components/matches/scoreboard.section'
-import { Select } from '@/components/select'
 import Spinner from '@/components/spinner'
+import { Lineup } from '@/components/teams/lineup.dialog'
 import { formatDateTime, getLengthInMinutes } from '@/lib/date-helper'
 import { getMatch, MatchRecord } from '@/services/match.service'
 
@@ -75,46 +74,13 @@ export default function MatchControlPage() {
       ) : (
         <Spinner />
       )}
-      <section className="mt-6 flex">
-        {match?.home_or_away === 'away' && <div className="w-1/2" />}
-        <div className={`${match?.home_or_away === 'away' ? 'pl-6' : 'pr-6 text-right'} w-1/2`}>
-          <Heading>Line-up</Heading>
-          {match?.team.players.map((record) => (
-            <div key={record.player_id}>
-              <Field className="flex items-center gap-1">
-                <Label className="flex-grow">{record.player.first_name}</Label>
-                <Select name={record.player_id} className="!w-20">
-                  <option disabled>Pos</option>
-                  {[
-                    'ST',
-                    'CF',
-                    'LW',
-                    'RW',
-                    'LM',
-                    'RM',
-                    'CAM',
-                    'CM',
-                    'CDM',
-                    'RB',
-                    'RWB',
-                    'LB',
-                    'LWB',
-                    'CB',
-                    'RCB',
-                    'LCB',
-                    'GK',
-                    'SUB',
-                  ].map((position) => (
-                    <option key={position} className="capitalize">
-                      {position}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-          ))}
+      {match && (
+        <div className="w-full items-center text-center">
+          <Lineup team={match.team} match={match}>
+            Lineup
+          </Lineup>
         </div>
-      </section>
+      )}
       <ArrowLeftIcon
         role="button"
         onClick={() => window.history.back()}

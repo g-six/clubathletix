@@ -23,3 +23,8 @@ export async function inviteUser(
 
     return await res.json()
 }
+export async function getProfile() {
+    const res = await fetch('/api/profile')
+
+    return await res.json()
+}

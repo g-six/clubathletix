@@ -10,6 +10,7 @@ import {
 } from '@/components/dropdown'
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/react/16/solid'
+import cookieJar from 'js-cookie'
 import { useEffect, useState } from 'react'
 export function TeamDropdown({
   data,
@@ -28,7 +29,6 @@ export function TeamDropdown({
   className?: string
 }) {
   const [team, setTeam] = useState<(typeof data)[0] | null>()
-  console.log({ data })
   useEffect(() => {
     if (selected) {
       setTeam(data.find((t) => t.team_id === selected))
@@ -47,6 +47,7 @@ export function TeamDropdown({
           <DropdownItem
             href={`/organizations/${t.organization_id}/teams/${t.team_id}`}
             onClick={() => {
+              cookieJar.set('organization_id', t.organization_id)
               setTeam(t)
             }}
             key={t.team_id}

@@ -53,7 +53,7 @@ export function DropdownMenu({
 export function DropdownItem({
   className,
   ...props
-}: { className?: string; action?: () => void } & (
+}: { className?: string; 'use-native-anchor'?: boolean; action?: () => void } & (
   | Omit<Headless.MenuItemProps<'button'>, 'as' | 'className'>
   | Omit<Headless.MenuItemProps<typeof Link>, 'as' | 'className'>
 )) {
@@ -89,7 +89,11 @@ export function DropdownItem({
     )
   }
 
-  return 'href' in props ? (
+  return 'use-native-anchor' in props && 'href' in props ? (
+    <a href={props.href || ''} className={classes}>
+      {props.children}
+    </a>
+  ) : 'href' in props ? (
     <Headless.MenuItem as={Link} {...props} className={classes} />
   ) : (
     <Headless.MenuItem as="button" type="button" {...props} className={classes} />

@@ -10,7 +10,7 @@ import { DropdownDivider, DropdownItem, DropdownLabel, DropdownMenu } from '../d
 export function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom end' }) {
   return (
     <DropdownMenu className="min-w-64" anchor={anchor}>
-      <DropdownItem href="#">
+      <DropdownItem href="/my-account">
         <UserCircleIcon />
         <DropdownLabel>My account</DropdownLabel>
       </DropdownItem>
@@ -27,7 +27,6 @@ export function AccountDropdownMenu({ anchor }: { anchor: 'top start' | 'bottom 
       <DropdownItem
         action={async () => {
           'use server'
-          console.log('signing out')
           await signOut({
             redirectTo: '/login',
           })

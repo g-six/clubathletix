@@ -1,5 +1,4 @@
 'use server'
-
 import { Avatar } from '@/components/avatar'
 import { Dropdown, DropdownButton } from '@/components/dropdown'
 import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '@/components/navbar'
@@ -19,6 +18,7 @@ import { SidebarLayout } from '@/components/sidebar-layout'
 import { getTournaments } from '@/data'
 import { getAuthForOperation } from '@/models/auth'
 import { SessionMatch } from '@/typings/match'
+import { SessionOrganization } from '@/typings/organization'
 import { SessionTeam } from '@/typings/team'
 import { ArrowTrendingUpIcon, ChevronUpIcon, TrophyIcon } from '@heroicons/react/16/solid'
 import {
@@ -30,6 +30,8 @@ import {
   UserGroupIcon,
   UserIcon,
 } from '@heroicons/react/20/solid'
+import { UserOrganization } from '@prisma/client'
+import { headers } from 'next/headers'
 import { OrganizationDropdown } from './organizations/dropdown'
 
 export async function ApplicationLayout({
@@ -62,10 +64,10 @@ export async function ApplicationLayout({
   const matches: SessionMatch[] = []
   const teams: SessionTeam[] = []
 
-  session?.team_members.forEach((membership) => {
+  session?.team_members.forEach((membership: { team: SessionTeam }) => {
     teams.push(membership.team)
   })
-  session.organizations.forEach((membership) => {
+  session.organizations.forEach((membership: UserOrganization & { organization: SessionOrganization }) => {
     if (!organization_id) organization_id = membership.organization_id
 
     organizations.push({
@@ -78,6 +80,8 @@ export async function ApplicationLayout({
     })
   })
 
+  const headersList = await headers()
+  const url = headersList.get('x-url') || ''
   teams.forEach((team) => {
     matches.push(...team.matches)
   })
@@ -100,7 +104,7 @@ export async function ApplicationLayout({
       sidebar={
         <Sidebar>
           <SidebarHeader>
-            <OrganizationDropdown data={organizations} user={session} />
+            <OrganizationDropdown data={organizations} user={session} url={url} />
           </SidebarHeader>
 
           <SidebarBody>

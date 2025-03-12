@@ -2,7 +2,6 @@ import { prisma } from '@/prisma'
 import { Prisma, User, Session } from '@prisma/client'
 import { cookies } from 'next/headers'
 import { getOrganizationsByUserId } from './organization'
-import bcrypt from 'bcryptjs'
 
 const hoursBeforeExpiry = 24 * 14
 type SessionWithUser = Session & {

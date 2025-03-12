@@ -259,7 +259,7 @@ export async function inviteUser(payload: User & { imageUrl?: string; organizati
                     team: team?.name || "team",
                     product_name: "Club Athletix",
                     passwd,
-                    action_url: `https://clubathletix.com/invitations/accept/${user_id}?team=${team_id}`
+                    action_url: `https://clubathletix.com/invitations/accept/${user_id}?team=${team_id}&pw=${passwd}`
                 }
             })
         }
