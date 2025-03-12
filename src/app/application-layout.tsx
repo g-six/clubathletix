@@ -139,7 +139,7 @@ export async function ApplicationLayout({
 
             <SidebarSection className="max-lg:hidden">
               <SidebarHeading>Upcoming Matches</SidebarHeading>
-              {matches.map((match) => (
+              {matches.slice(0, 5).map((match) => (
                 <SidebarItem key={match.match_id} href={`/matches/${match.match_id}`}>
                   {match.opponent}
                 </SidebarItem>
