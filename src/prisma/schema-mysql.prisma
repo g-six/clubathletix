@@ -209,7 +209,7 @@ model PlayerParent {
 
 model Team {
   organization_id String
-  league_id       String
+  league_id       String?
   logo            String?
   name            String
   age_group       String
@@ -225,7 +225,7 @@ model Team {
   matches         Match[]
   members         TeamMember[]
   players         TeamPlayer[]
-  league          League       @relation(fields: [league_id], references: [league_id])
+  league          League?       @relation(fields: [league_id], references: [league_id])
   organization    Organization @relation(fields: [organization_id], references: [organization_id])
   trainings       Training[]
 

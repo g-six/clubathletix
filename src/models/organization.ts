@@ -1,6 +1,6 @@
 import { getPresignedUrlWithClient } from '@/models/file'
 import { prisma } from '@/prisma'
-import { Match, Prisma, Training, League } from '@prisma/client'
+import { Match, Prisma, Training, League, Team } from '@prisma/client'
 import { cookies } from 'next/headers'
 import { getAuthForOperation } from './auth'
 import { SessionOrganization } from '@/typings/organization'
@@ -65,14 +65,21 @@ export async function getMySessionAndOrganization(organization_id: string, optio
         [Organization, Team[], TeamMember[], Match[], League[], Player[], Training[], SessionUser] = await Promise.all([
             prisma.organization.findUnique({
                 where: {
-                    organization_id
+                    organization_id,
                 }
             }),
             prisma.team.findMany({
-                include: {
+                select: {
+                    team_id: true,
                     league: true,
+                    logo: true,
+                    name: true,
+                    division: true,
+                    age_group: true,
+                    created_at: true,
                     members: {
                         select: {
+                            user_id: true,
                             role: true,
                             user: {
                                 select: {
@@ -88,23 +95,13 @@ export async function getMySessionAndOrganization(organization_id: string, optio
                     organization_id
                 },
             }),
-            prisma.teamMember.findMany({
+            prisma.userOrganization.findMany({
                 where: {
                     organization_id
                 },
                 select: {
                     user_id: true,
-                    team_id: true,
-                    team_member_id: true,
                     role: true,
-                    team: {
-                        select: {
-                            logo: true,
-                            name: true,
-                            division: true,
-                            age_group: true
-                        }
-                    },
                     user: {
                         select: {
                             first_name: true,
@@ -157,9 +154,7 @@ export async function getMySessionAndOrganization(organization_id: string, optio
         ])
     return {
         ...organization,
-        teams: teams.filter(team => {
-            return members.find(m => m.team_id === team.team_id)
-        }),
+        teams,
         members: members.map(m => ({
             team_member_id: m.team_member_id,
             user_id: m.user_id,
@@ -179,7 +174,7 @@ export async function getMySessionAndOrganization(organization_id: string, optio
             user_id: string
             team_id: string
             role: string
-            user: Pick<User, 'first_name' | 'last_name' | 'email' | 'phone' | 'image'>
+            user: Pick<User, 'first_name' | 'last_name' | 'email' | 'phone' | 'image' | 'created_at'>
         }[]
         leagues: SesssionLeague[]
         matches: SessionMatch[]
@@ -260,7 +255,6 @@ export async function updateOrganization(organization_id: string, payload: Prism
 
 export type CreateOrganization = Prisma.Args<typeof prisma.organization, 'create'>['data']
 export type Organization = Prisma.Args<typeof prisma.organization, 'findUnique'>['data']
-export type Team = Prisma.Args<typeof prisma.team, 'findUnique'>['data']
 export type TeamMember = Prisma.Args<typeof prisma.teamMember, 'findUnique'>['data']
 export type User = Prisma.Args<typeof prisma.user, 'findUnique'>['data']
 export type Player = Prisma.Args<typeof prisma.player, 'findUnique'>['data']

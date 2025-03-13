@@ -151,11 +151,15 @@ export function MatchDialog(
                         <option value="" disabled>
                           Select league&hellip;
                         </option>
-                        {props.teams?.map((team) => (
-                          <option value={team.league?.league_id} key={team.league?.league_id}>
-                            {team.league?.name}
-                          </option>
-                        ))}
+                        <option value="friendly">Friendly</option>
+                        <option value="tournament">Tournament</option>
+                        {props.teams
+                          ?.filter((team) => team.league)
+                          .map((team) => (
+                            <option value={team.league?.league_id} key={team.league?.league_id}>
+                              {team.league?.name}
+                            </option>
+                          ))}
                       </Select>
                     </Field>
                   </>

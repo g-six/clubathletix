@@ -71,20 +71,6 @@ export default async function ScheduleIndexPage(props: { params: Promise<unknown
             </div>
           }
         />
-        <Card
-          href="/matches/new"
-          title="Upcoming trainings"
-          contents={
-            <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U15 Titans</span>
-              </Link>
-              <Link href={'/matches/new'} className="group flex justify-between">
-                <span className="group-hover:text-zinc-200">U14 Selects</span>
-              </Link>
-            </div>
-          }
-        />
       </div>
       <Subheading className="mt-14">Teams</Subheading>
       <Table className="mt-4 [--gutter:--spacing(6)] lg:[--gutter:--spacing(10)]">

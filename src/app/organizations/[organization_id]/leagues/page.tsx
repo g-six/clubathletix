@@ -36,7 +36,7 @@ export default async function Leagues({ params }: { params: Promise<unknown> }) 
         <Subheading>Overview</Subheading>
         <div>
           <Select name="period">
-            <option value="last_week">Last week</option>
+            <option value="last_week">Last wseek</option>
             <option value="last_two">Last two weeks</option>
             <option value="last_month">Last month</option>
             <option value="last_quarter">Last quarter</option>

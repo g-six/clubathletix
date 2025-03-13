@@ -41,7 +41,22 @@ export async function getUserByEmail(email: string): Promise<SessionUser | null>
                                     start_date: true,
                                     end_date: true,
 
-                                }
+                                },
+                                take: 3,
+                            },
+                            members: {
+                                select: {
+                                    user_id: true,
+                                    role: true,
+                                    user: {
+                                        select: {
+                                            first_name: true,
+                                            last_name: true,
+                                            image: true,
+                                        }
+                                    }
+                                },
+                                take: 5,
                             }
                         }
                     }
@@ -78,6 +93,13 @@ export async function getUserByEmail(email: string): Promise<SessionUser | null>
                                     match_date: true,
                                     home_or_away: true,
                                     league_id: true,
+                                }
+                            },
+                            members: {
+                                select: {
+                                    user_id: true,
+                                    role: true,
+
                                 }
                             }
                         }

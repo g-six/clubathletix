@@ -31,3 +31,7 @@ export default function Spinner(props: { simple?: boolean; size?: string; label?
     </div>
   )
 }
+
+export function FutbolSpinner({ twSize }: { twSize: 'w-6' | 'w-5' | 'w-4' | 'w-3' | 'w-2' }) {
+  return <img alt="loading" src="/loaders/default.gif" className={`rounded-full bg-white ${twSize}`} />
+}
