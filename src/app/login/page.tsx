@@ -1,7 +1,7 @@
 'use client'
 import { authenticate } from '@/lib/auth-actions'
 import { useSearchParams } from 'next/navigation'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 
 import { Alert } from '@/components/alert'
 import { Button } from '@/components/button'
@@ -33,44 +33,12 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [resetMessage, setResetMessage] = useState('Click here to request a password reset email')
   if (pathname === '/') location.href = '/login'
+
+  useEffect(() => {
+    if (!isLoading) setError(errorMessage || '')
+  }, [errorMessage, isLoading])
   return (
-    <form
-      action={formAction}
-      className="mx-auto max-w-2xl"
-      // onSubmit={(evt: FormEvent<HTMLFormElement>) => {
-      //   evt.preventDefault()
-      //   setLoading(true)
-      //   const form = evt.currentTarget
-      //   const elements = form.elements as typeof form.elements & {
-      //     [k: string]: HTMLInputElement
-      //   }
-      //   const payload = {
-      //     email: elements.email.value,
-      //     password: elements.password.value,
-      //   }
-      //   fetch('/api/login', {
-      //     headers: {
-      //       contentType: 'application/json',
-      //     },
-      //     body: JSON.stringify(payload),
-      //     method: 'POST',
-      //   })
-      //     .then((res) => {
-      //       res.json().then((data) => {
-      //         if (data.session_id) {
-      //           if (data.organization_id) {
-      //             location.href = `/organizations/${data.organization_id}`
-      //           } else location.href = '/dashboard'
-      //         } else {
-      //           setError('Invalid email or password')
-      //         }
-      //       })
-      //     })
-      //     .finally(() => {
-      //       setLoading(false)
-      //     })
-      // }}
-    >
+    <form action={formAction} className="mx-auto max-w-2xl">
       <input type="hidden" name="redirectTo" value={callbackUrl} />
       <Heading className="text-center">
         <Image
@@ -85,17 +53,10 @@ export default function Login() {
       <Divider className="my-10 mt-6" />
 
       <section className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
-        {errorMessage ? (
-          <div>
-            <Heading>Error</Heading>
-            <p>{errorMessage}</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            <Subheading>Email</Subheading>
-            <Text>Enter the email address used to sign-up for ClubAthletix.</Text>
-          </div>
-        )}
+        <div className="space-y-1">
+          <Subheading>Email</Subheading>
+          <Text>Enter the email address used to sign-up for ClubAthletix.</Text>
+        </div>
         <div className="space-y-4 lg:col-span-2">
           <Input
             type="email"

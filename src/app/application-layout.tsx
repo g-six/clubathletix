@@ -12,7 +12,6 @@ import {
   SidebarItem,
   SidebarLabel,
   SidebarSection,
-  SidebarSpacer,
 } from '@/components/sidebar'
 import { SidebarLayout } from '@/components/sidebar-layout'
 import { getTournaments } from '@/data'
@@ -21,17 +20,9 @@ import { SessionMatch } from '@/typings/match'
 import { SessionOrganization } from '@/typings/organization'
 import { SessionTeam } from '@/typings/team'
 import { ArrowTrendingUpIcon, ChevronUpIcon, TrophyIcon } from '@heroicons/react/16/solid'
-import {
-  CalendarIcon,
-  Cog6ToothIcon,
-  HomeIcon,
-  QuestionMarkCircleIcon,
-  SparklesIcon,
-  UserGroupIcon,
-  UserIcon,
-} from '@heroicons/react/20/solid'
+import { CalendarIcon, Cog6ToothIcon, HomeIcon, UserGroupIcon, UserIcon } from '@heroicons/react/20/solid'
 import { UserOrganization } from '@prisma/client'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { OrganizationDropdown } from './organizations/dropdown'
 
 export async function ApplicationLayout({
@@ -41,10 +32,11 @@ export async function ApplicationLayout({
   events: Awaited<ReturnType<typeof getTournaments>>
   children: React.ReactNode
 }) {
+  const cookieJar = await cookies()
   const session = await getAuthForOperation().catch(console.error)
-  let basepath = '/'
+  let basepath = ''
 
-  let organization_id = ''
+  let organization_id = cookieJar.get('organization_id')?.value || ''
 
   if (!session?.email) {
     return <section className="flex h-screen flex-col items-center justify-center px-8">{children}</section>
@@ -82,6 +74,13 @@ export async function ApplicationLayout({
 
   const headersList = await headers()
   const url = headersList.get('x-url') || ''
+
+  if (organization_id) {
+    if (url) {
+      const { pathname } = new URL(url)
+      if (!pathname.startsWith('/organization')) basepath = `/organizations/${organization_id}/`
+    }
+  }
   teams.forEach((team) => {
     matches.push(...team.matches)
   })
@@ -109,29 +108,29 @@ export async function ApplicationLayout({
 
           <SidebarBody>
             <SidebarSection>
-              <SidebarItem href={basepath}>
+              <SidebarItem href="/">
                 <HomeIcon />
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
               {isRoot && (
-                <SidebarItem href="leagues">
+                <SidebarItem href="/leagues">
                   <CalendarIcon />
                   <SidebarLabel>Leagues</SidebarLabel>
                 </SidebarItem>
               )}
-              <SidebarItem href="teams">
+              <SidebarItem href="/teams">
                 <UserGroupIcon />
                 <SidebarLabel>Teams</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="matches">
+              <SidebarItem href="/matches">
                 <TrophyIcon />
                 <SidebarLabel>Matches</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="trainings">
+              <SidebarItem href="/trainings">
                 <ArrowTrendingUpIcon />
                 <SidebarLabel>Trainings</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="settings">
+              <SidebarItem href="/settings">
                 <Cog6ToothIcon />
                 <SidebarLabel>Settings</SidebarLabel>
               </SidebarItem>
@@ -145,7 +144,7 @@ export async function ApplicationLayout({
                 </SidebarItem>
               ))}
             </SidebarSection>
-
+            {/* 
             <SidebarSpacer />
 
             <SidebarSection>
@@ -157,7 +156,7 @@ export async function ApplicationLayout({
                 <SparklesIcon />
                 <SidebarLabel>Changelog</SidebarLabel>
               </SidebarItem>
-            </SidebarSection>
+            </SidebarSection> */}
           </SidebarBody>
 
           <SidebarFooter className="max-lg:hidden">

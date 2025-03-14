@@ -26,6 +26,7 @@ export async function getUserByEmail(email: string): Promise<SessionUser | null>
                     role: true,
                     organization: {
                         select: {
+                            organization_id: true,
                             name: true,
                             logo: true,
                             short_name: true,

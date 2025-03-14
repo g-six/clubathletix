@@ -9,7 +9,7 @@ export function Card({
   CreateDialog,
 }: {
   title: string
-  contents: JSX.Element
+  contents?: JSX.Element
   CreateDialog?: JSX.Element
   href?: string
 }) {

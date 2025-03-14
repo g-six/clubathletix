@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
     const session = await getAuthForOperation()
-
+    console.log(session)
     if (!session.user_id) return Response.json({
         error: 'User is not authorized'
     }, {

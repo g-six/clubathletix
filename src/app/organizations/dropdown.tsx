@@ -10,7 +10,7 @@ import {
 } from '@/components/dropdown'
 import { SidebarItem, SidebarLabel } from '@/components/sidebar'
 import { SessionUser } from '@/typings/user'
-import { ChevronDownIcon, Cog8ToothIcon, UserGroupIcon } from '@heroicons/react/16/solid'
+import { ChevronDownIcon, UserGroupIcon } from '@heroicons/react/16/solid'
 import cookieJar from 'js-cookie'
 import { useEffect, useState } from 'react'
 
@@ -40,6 +40,12 @@ export function OrganizationDropdown({
     cookieJar.set('organization_id', organization_id)
     setCurrent(data.find((record) => record.organization_id === organization_id))
   }, [])
+
+  useEffect(() => {
+    if (current?.organization_id) {
+      cookieJar.set('organization_id', current.organization_id)
+    }
+  }, [current?.organization_id])
   return (
     <Dropdown>
       {current?.organization && (
@@ -50,17 +56,8 @@ export function OrganizationDropdown({
         </DropdownButton>
       )}
       <DropdownMenu className="min-w-80 lg:min-w-64" anchor="bottom start">
-        <DropdownItem href={`/organizations/${organization_id}/settings`}>
-          <Cog8ToothIcon />
-          <DropdownLabel>Settings</DropdownLabel>
-        </DropdownItem>
-        {Boolean(data.length) && <DropdownDivider />}
         {data.map((org) => (
-          <DropdownItem
-            href={`/organizations/${org.organization_id}`}
-            key={org.organization_id}
-            onClick={() => setCurrent(org)}
-          >
+          <DropdownItem key={org.organization_id} onClick={() => setCurrent(org)}>
             <Avatar slot="icon" src={org.organization.logo || `/teams/catalyst.svg`} />
             <DropdownLabel>{org.name}</DropdownLabel>
           </DropdownItem>

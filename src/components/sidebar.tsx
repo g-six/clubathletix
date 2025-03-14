@@ -110,20 +110,6 @@ export const SidebarItem = forwardRef(function SidebarItem(
   let { href } = props as unknown as {
     href?: string
   }
-
-  if (
-    href &&
-    href !== '#' &&
-    !href.startsWith('/organizations/') &&
-    !href.startsWith('/') &&
-    pathname.startsWith('/organizations/')
-  ) {
-    const [, organization_id] = pathname.split('/').filter(Boolean)
-    href = `/organizations/${organization_id}/${href}`
-  } else if (typeof href !== undefined && href !== '#') {
-    if (href === '/') href = pathname.split('/').slice(0, 3).join('/')
-    else href = '/' + pathname.split('/').filter(Boolean).join('/')
-  }
   isCurrentlyActive =
     isCurrentlyActive ||
     Boolean(

@@ -7,11 +7,10 @@ import { Badge } from '@/components/badge'
 import { Card } from '@/components/card'
 import Greeting from '@/components/greeting'
 import { Link } from '@/components/link'
+import MatchesCard from '@/components/matches/matches.card'
 import { CreateLeagueDialog } from '@/components/organizations/league.dialog'
-import { MatchDialog } from '@/components/organizations/match.dialog'
 import { InviteMemberDialog } from '@/components/organizations/member.dialog'
 import { TeamDialog } from '@/components/organizations/team.dialog'
-import { formatDateTime } from '@/lib/date-helper'
 import { getAuthForOperation } from '@/models/auth'
 import { SesssionLeague } from '@/typings/league'
 import { SessionMatch } from '@/typings/match'
@@ -24,15 +23,31 @@ import { cookies } from 'next/headers'
 export default async function Home() {
   const session = await getAuthForOperation()
   const cookieJar = await cookies()
-  const { organization: selectedOrganization, role } = (cookieJar.get('organization_id')?.value
+
+  if (!session?.user_id) {
+    return <div>Please sign in</div>
+  }
+  if (!session.organizations.length) return <CreateOrganizationForm />
+
+  if (!cookieJar.get('organization_id')?.value && session.organizations.length) {
+    cookieJar.set({
+      name: 'organization_id',
+      value: session.organizations[0].organization_id,
+      path: '/',
+    })
+  }
+
+  const { organization: selectedOrganization } = (cookieJar.get('organization_id')?.value
     ? session.organizations.find(
         ({ organization_id }: { organization_id: string }) =>
           organization_id === cookieJar.get('organization_id')?.value
       )
     : session.organizations[0]) as unknown as {
+    organization_id: string
     organization?: Organization & { leagues: SesssionLeague[]; members: SessionOrganizationUser[] }
     role?: string
   }
+
   const leagues = selectedOrganization?.leagues || []
   const matches: SessionMatch[] = []
   const manageableTeams: {
@@ -41,26 +56,28 @@ export default async function Home() {
     role: string
     league_id?: string
   }[] = []
-  const teams = (session.team_members as (SessionTeamMember & { team: SessionTeam })[]).map((tm) => {
-    if (['coach', 'assistant coach', 'team manager'].includes(tm.role))
-      manageableTeams.push({
-        team_id: tm.team_id,
-        role: tm.role,
-        name: tm.team.name,
-        league_id: tm.team.league_id || undefined,
-      })
-    return {
-      ...tm,
-      team: undefined,
-      ...tm.team,
-    }
-  })
-  console.log(selectedOrganization?.members)
-  if (!session?.user_id) {
-    return <div>Please sign in</div>
-  }
 
-  if (!session.organizations.length) return <CreateOrganizationForm />
+  const teams = (session.team_members as (SessionTeamMember & { team: SessionTeam })[])
+    .map((tm) => {
+      if (tm.team) {
+        const membership = tm.team.members.find((m) => m.user_id === session.user_id)
+        if (!membership && tm.role !== 'owner') return
+        if (['coach', 'assistant coach', 'team manager'].includes(membership?.role))
+          manageableTeams.push({
+            team_id: tm.team_id,
+            role: tm.role,
+            name: tm.team.name,
+            league_id: tm.team.league_id || undefined,
+          })
+        return {
+          ...tm,
+          team: undefined,
+          ...tm.team,
+        }
+      }
+    })
+    .filter(Boolean)
+
   return (
     <>
       <Greeting />
@@ -70,50 +87,7 @@ export default async function Home() {
             <Subheading>{selectedOrganization.name} Overview</Subheading>
           </div>
           <div className="mt-4 grid gap-8 lg:grid-cols-2">
-            <Card
-              title="Upcoming matches"
-              CreateDialog={
-                manageableTeams.length ? (
-                  <MatchDialog
-                    skeleton
-                    teams={manageableTeams.filter(Boolean).map(({ league_id, team_id, name }) => ({
-                      team_id,
-                      name,
-                      league_id,
-                      league: leagues.find((l) => l.league_id === league_id),
-                    }))}
-                  >
-                    Add match
-                  </MatchDialog>
-                ) : (
-                  <span />
-                )
-              }
-              href={`/organizations/${selectedOrganization?.organization_id}/matches`}
-              contents={
-                <div className="flex flex-col gap-0 text-xs/5 text-zinc-500">
-                  {matches.map((match) => (
-                    <Link
-                      href={`/match-control/${match.match_id}`}
-                      className="group flex flex-wrap gap-1"
-                      key={match.match_id}
-                    >
-                      <span className="font-bold underline group-hover:text-lime-500">
-                        {teams.find((t) => t.team_id === match.team_id)?.name}
-                      </span>
-                      <span>vs.</span>
-                      <span className="flex-1 group-hover:text-zinc-200">{match.opponent}</span>
-                      <span className="w-full sm:hidden" />
-                      <Badge color="pink" text-size="text-xs/5 sm:text-[0.65rem]/3">
-                        {formatDateTime(new Date(match.match_date))}
-                      </Badge>
-                      <span className="h-2 w-full sm:hidden" />
-                    </Link>
-                  ))}
-                  {matches.length === 0 && <span>No upcoming matches</span>}
-                </div>
-              }
-            />
+            <MatchesCard />
 
             <Card
               href={leagues.length > 0 ? `/organizations/${selectedOrganization.organization_id}/leagues` : undefined}
@@ -206,7 +180,7 @@ export default async function Home() {
                     </div>
                   )}
 
-                  {teams.length > 0 && (
+                  {teams.length === 0 && (
                     <div className="my-1 flex w-full justify-end">
                       <TeamDialog
                         skeleton
